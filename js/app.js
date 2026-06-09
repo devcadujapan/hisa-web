@@ -3,78 +3,102 @@ console.log('🚀 App.js carregado!');
 
 // Aguardar DOM carregar
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📄 DOM carregado');
+    console.log('📄 DOM carregado - Iniciando app...');
     
+    // Verificar se db existe
     if (typeof db === 'undefined') {
-        console.error('❌ db não encontrado!');
-        alert('Erro de inicialização. Recarregue a página.');
+        console.error('❌ db não definido!');
+        alert('Erro: Banco de dados não carregado. Recarregue a página.');
         return;
     }
     
-    await db.init();
-    console.log('✅ DB inicializado');
-    
-    const hoje = new Date().toISOString().split('T')[0];
-    document.querySelectorAll('input[type="date"]').forEach(input => {
-        if (!input.value) input.value = hoje;
-    });
-    
-    document.querySelectorAll('.menu-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const pagina = btn.getAttribute('data-pagina');
-            mudarPagina(pagina);
+    try {
+        // Inicializar banco de dados
+        console.log('⏳ Inicializando banco de dados...');
+        await db.init();
+        console.log('✅ DB inicializado com sucesso!');
+        
+        // Configurar data atual
+        const hoje = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (!input.value) input.value = hoje;
         });
-    });
-    
-    // Botões + e - para todos os campos
-    document.querySelectorAll('.btn-plus, .btn-minus').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetId = btn.getAttribute('data-target');
-            const step = parseFloat(btn.getAttribute('data-step')) || 1;
-            const input = document.getElementById(targetId);
-            if (input) {
-                let value = parseFloat(input.value) || 0;
-                value += btn.classList.contains('btn-plus') ? step : -step;
-                if (value < 0) value = 0;
-                input.value = value;
-                
-                // Recalcular totais se for reposição
-                if (targetId === 'rep-valor-unitario' || targetId === 'rep-qtd') {
-                    calcularTotalReposicao();
+        
+        // Configurar navegação
+        document.querySelectorAll('.menu-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const pagina = btn.getAttribute('data-pagina');
+                mudarPagina(pagina);
+            });
+        });
+        
+        // Configurar botões + e -
+        document.querySelectorAll('.btn-plus, .btn-minus').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = btn.getAttribute('data-target');
+                const step = parseFloat(btn.getAttribute('data-step')) || 1;
+                const input = document.getElementById(targetId);
+                if (input) {
+                    let value = parseFloat(input.value) || 0;
+                    value += btn.classList.contains('btn-plus') ? step : -step;
+                    if (value < 0) value = 0;
+                    input.value = value;
+                    
+                    if (targetId === 'rep-valor-unitario' || targetId === 'rep-qtd') {
+                        calcularTotalReposicao();
+                    }
+                    if (targetId === 'edit-rep-valor-unitario' || targetId === 'edit-rep-qtd') {
+                        calcularTotalEdicaoReposicao();
+                    }
                 }
-            }
+            });
         });
-    });
-    
-    // Calcular total da reposição ao digitar
-    const repValorUnitario = document.getElementById('rep-valor-unitario');
-    const repQtd = document.getElementById('rep-qtd');
-    if (repValorUnitario) repValorUnitario.addEventListener('input', calcularTotalReposicao);
-    if (repQtd) repQtd.addEventListener('input', calcularTotalReposicao);
-    
-    // Edição - calcular total
-    const editRepValorUnitario = document.getElementById('edit-rep-valor-unitario');
-    const editRepQtd = document.getElementById('edit-rep-qtd');
-    if (editRepValorUnitario) editRepValorUnitario.addEventListener('input', calcularTotalEdicaoReposicao);
-    if (editRepQtd) editRepQtd.addEventListener('input', calcularTotalEdicaoReposicao);
-    
-    document.getElementById('btn-salvar-atendimento')?.addEventListener('click', salvarAtendimento);
-    document.getElementById('btn-salvar-reposicao')?.addEventListener('click', salvarReposicao);
-    document.getElementById('btn-salvar-despesa')?.addEventListener('click', salvarDespesa);
-    document.getElementById('btn-exportar-csv')?.addEventListener('click', exportarCSV);
-    
-    configurarModais();
-    
-    await carregarDashboard();
-    await carregarAtendimentos();
-    await carregarReposicoes();
-    await carregarDespesas();
-    await carregarRelatorios();
-    
-    console.log('✅ App inicializado com sucesso!');
+        
+        // Calcular total da reposição
+        const repValorUnitario = document.getElementById('rep-valor-unitario');
+        const repQtd = document.getElementById('rep-qtd');
+        if (repValorUnitario) repValorUnitario.addEventListener('input', calcularTotalReposicao);
+        if (repQtd) repQtd.addEventListener('input', calcularTotalReposicao);
+        
+        // Calcular total da edição de reposição
+        const editRepValorUnitario = document.getElementById('edit-rep-valor-unitario');
+        const editRepQtd = document.getElementById('edit-rep-qtd');
+        if (editRepValorUnitario) editRepValorUnitario.addEventListener('input', calcularTotalEdicaoReposicao);
+        if (editRepQtd) editRepQtd.addEventListener('input', calcularTotalEdicaoReposicao);
+        
+        // Configurar botões de salvar
+        const btnAtendimento = document.getElementById('btn-salvar-atendimento');
+        if (btnAtendimento) btnAtendimento.addEventListener('click', salvarAtendimento);
+        
+        const btnReposicao = document.getElementById('btn-salvar-reposicao');
+        if (btnReposicao) btnReposicao.addEventListener('click', salvarReposicao);
+        
+        const btnDespesa = document.getElementById('btn-salvar-despesa');
+        if (btnDespesa) btnDespesa.addEventListener('click', salvarDespesa);
+        
+        const btnExportar = document.getElementById('btn-exportar-csv');
+        if (btnExportar) btnExportar.addEventListener('click', exportarCSV);
+        
+        configurarModais();
+        
+        // Carregar dados
+        console.log('⏳ Carregando dados...');
+        await carregarDashboard();
+        await carregarAtendimentos();
+        await carregarReposicoes();
+        await carregarDespesas();
+        await carregarRelatorios();
+        
+        console.log('✅ App inicializado com sucesso!');
+        
+    } catch (error) {
+        console.error('❌ Erro fatal na inicialização:', error);
+        alert('Erro ao inicializar o aplicativo: ' + error.message);
+    }
 });
 
+// ============ FUNÇÕES DE CÁLCULO ============
 function calcularTotalReposicao() {
     const valorUnitario = parseFloat(document.getElementById('rep-valor-unitario')?.value) || 0;
     const quantidade = parseFloat(document.getElementById('rep-qtd')?.value) || 0;
@@ -97,26 +121,52 @@ function calcularTotalEdicaoReposicao() {
     }
 }
 
+// ============ CONFIGURAÇÃO DOS MODAIS ============
 function configurarModais() {
-    document.getElementById('btn-fechar-modal-atendimento')?.addEventListener('click', () => {
-        document.getElementById('modal-editar-atendimento').style.display = 'none';
-    });
-    document.getElementById('btn-salvar-edicao-atendimento')?.addEventListener('click', salvarEdicaoAtendimento);
-    document.getElementById('btn-excluir-atendimento')?.addEventListener('click', excluirAtendimento);
+    // Modal Atendimento
+    const btnFecharAtendimento = document.getElementById('btn-fechar-modal-atendimento');
+    if (btnFecharAtendimento) {
+        btnFecharAtendimento.addEventListener('click', () => {
+            document.getElementById('modal-editar-atendimento').style.display = 'none';
+        });
+    }
     
-    document.getElementById('btn-fechar-modal-reposicao')?.addEventListener('click', () => {
-        document.getElementById('modal-editar-reposicao').style.display = 'none';
-    });
-    document.getElementById('btn-salvar-edicao-reposicao')?.addEventListener('click', salvarEdicaoReposicao);
-    document.getElementById('btn-excluir-reposicao')?.addEventListener('click', excluirReposicao);
+    const btnSalvarAtendimento = document.getElementById('btn-salvar-edicao-atendimento');
+    if (btnSalvarAtendimento) btnSalvarAtendimento.addEventListener('click', salvarEdicaoAtendimento);
     
-    document.getElementById('btn-fechar-modal-despesa')?.addEventListener('click', () => {
-        document.getElementById('modal-editar-despesa').style.display = 'none';
-    });
-    document.getElementById('btn-salvar-edicao-despesa')?.addEventListener('click', salvarEdicaoDespesa);
-    document.getElementById('btn-excluir-despesa')?.addEventListener('click', excluirDespesa);
+    const btnExcluirAtendimento = document.getElementById('btn-excluir-atendimento');
+    if (btnExcluirAtendimento) btnExcluirAtendimento.addEventListener('click', excluirAtendimento);
+    
+    // Modal Reposição
+    const btnFecharReposicao = document.getElementById('btn-fechar-modal-reposicao');
+    if (btnFecharReposicao) {
+        btnFecharReposicao.addEventListener('click', () => {
+            document.getElementById('modal-editar-reposicao').style.display = 'none';
+        });
+    }
+    
+    const btnSalvarReposicao = document.getElementById('btn-salvar-edicao-reposicao');
+    if (btnSalvarReposicao) btnSalvarReposicao.addEventListener('click', salvarEdicaoReposicao);
+    
+    const btnExcluirReposicao = document.getElementById('btn-excluir-reposicao');
+    if (btnExcluirReposicao) btnExcluirReposicao.addEventListener('click', excluirReposicao);
+    
+    // Modal Despesa
+    const btnFecharDespesa = document.getElementById('btn-fechar-modal-despesa');
+    if (btnFecharDespesa) {
+        btnFecharDespesa.addEventListener('click', () => {
+            document.getElementById('modal-editar-despesa').style.display = 'none';
+        });
+    }
+    
+    const btnSalvarDespesa = document.getElementById('btn-salvar-edicao-despesa');
+    if (btnSalvarDespesa) btnSalvarDespesa.addEventListener('click', salvarEdicaoDespesa);
+    
+    const btnExcluirDespesa = document.getElementById('btn-excluir-despesa');
+    if (btnExcluirDespesa) btnExcluirDespesa.addEventListener('click', excluirDespesa);
 }
 
+// ============ NAVEGAÇÃO ============
 function mudarPagina(pagina) {
     document.querySelectorAll('.menu-btn').forEach(btn => {
         btn.classList.remove('ativo');
@@ -136,6 +186,7 @@ function mudarPagina(pagina) {
     else if (pagina === 'relatorios') carregarRelatorios();
 }
 
+// ============ DASHBOARD ============
 async function carregarDashboard() {
     try {
         const summary = await db.getSummary();
@@ -159,7 +210,10 @@ async function carregarAtendimentos() {
         }
         tbody.innerHTML = atendimentos.map(item => `
             <tr style="cursor: pointer;" onclick="abrirModalAtendimento(${item.id})">
-                <td>${item.data}</td><td>${item.nome_cliente}</td><td>${item.servico || '-'}</td><td>R$ ${(item.valor || 0).toFixed(2)}</td>
+                <td>${item.data}</td>
+                <td>${item.nome_cliente}</td>
+                <td>${item.servico || '-'}</td>
+                <td>R$ ${(item.valor || 0).toFixed(2)}</td>
             </tr>
         `).join('');
     } catch (error) {
@@ -173,14 +227,18 @@ async function salvarAtendimento() {
         const cliente = document.getElementById('att-cliente').value.trim();
         const servico = document.getElementById('att-servico').value.trim();
         const valor = parseFloat(document.getElementById('att-valor').value);
+        
         if (!cliente) { alert('Digite o nome da cliente!'); return; }
         if (!servico) { alert('Digite o tipo de serviço!'); return; }
         if (valor <= 0) { alert('Digite um valor válido!'); return; }
+        
         await db.add('atendimentos', { data, nome_cliente: cliente, servico, valor });
         alert('✅ Atendimento salvo!');
+        
         document.getElementById('att-cliente').value = '';
         document.getElementById('att-servico').value = '';
         document.getElementById('att-valor').value = 0;
+        
         await carregarAtendimentos();
         await carregarDashboard();
         await carregarRelatorios();
@@ -204,8 +262,8 @@ async function carregarReposicoes() {
                 <td>${item.data}</td>
                 <td>${item.produto}</td>
                 <td>R$ ${(item.valor_unitario || 0).toFixed(2)}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${(item.valor_total || 0).toFixed(2)}</td>
+                <td>${item.quantidade || 0}</td>
+                <td>R$ ${(item.valor_total || item.valor || 0).toFixed(2)}</td>
             </tr>
         `).join('');
     } catch (error) {
@@ -231,10 +289,10 @@ async function salvarReposicao() {
             valor_unitario: valorUnitario,
             quantidade: quantidade,
             valor_total: valorTotal,
-            valor: valorTotal // Para compatibilidade com summary
+            valor: valorTotal
         });
         
-        alert('✅ Reposição salva! (Total: R$ ' + valorTotal.toFixed(2) + ')');
+        alert(`✅ Reposição salva! (${quantidade} un x R$ ${valorUnitario.toFixed(2)} = R$ ${valorTotal.toFixed(2)})`);
         
         document.getElementById('rep-produto').value = '';
         document.getElementById('rep-valor-unitario').value = 0;
@@ -261,7 +319,10 @@ async function carregarDespesas() {
         }
         tbody.innerHTML = despesas.map(item => `
             <tr style="cursor: pointer;" onclick="abrirModalDespesa(${item.id})">
-                <td>${item.data}</td><td>${item.descricao || '-'}</td><td>${item.tipo || '-'}</td><td>R$ ${(item.valor || 0).toFixed(2)}</td>
+                <td>${item.data}</td>
+                <td>${item.descricao || '-'}</td>
+                <td>${item.tipo || '-'}</td>
+                <td>R$ ${(item.valor || 0).toFixed(2)}</td>
             </tr>
         `).join('');
     } catch (error) {
@@ -275,14 +336,18 @@ async function salvarDespesa() {
         const descricao = document.getElementById('desp-descricao').value.trim();
         const tipo = document.getElementById('desp-tipo').value;
         const valor = parseFloat(document.getElementById('desp-valor').value);
+        
         if (!descricao) { alert('Digite a descrição da despesa!'); return; }
         if (!tipo) { alert('Selecione uma categoria!'); return; }
         if (valor <= 0) { alert('Digite um valor válido!'); return; }
+        
         await db.add('despesas', { data, descricao, tipo, valor });
         alert('✅ Despesa salva!');
+        
         document.getElementById('desp-descricao').value = '';
         document.getElementById('desp-tipo').value = '';
         document.getElementById('desp-valor').value = 0;
+        
         await carregarDespesas();
         await carregarDashboard();
         await carregarRelatorios();
@@ -300,101 +365,36 @@ async function carregarRelatorios() {
         const reposicoes = await db.getAll('reposicoes');
         const despesas = await db.getAll('despesas');
         
-        // Calcular totais
         const totalEntradasCalc = atendimentos.reduce((sum, a) => sum + (a.valor || 0), 0);
         const totalReposicoesCalc = reposicoes.reduce((sum, r) => sum + (r.valor_total || r.valor || 0), 0);
         const totalDespesasCalc = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
         const totalSaidasCalc = totalReposicoesCalc + totalDespesasCalc;
         const saldoCalc = totalEntradasCalc - totalSaidasCalc;
         
-        // Criar array para a tabela
         const todos = [];
         
-        // Adicionar linha de cabeçalho de resumo
-        todos.push({ 
-            data: '', 
-            tipo: '📊 RESUMO', 
-            descricao: '==================', 
-            valor: 0,
-            isResumo: true 
-        });
+        todos.push({ data: '', tipo: '📊 RESUMO', descricao: '==================', valor: 0, isResumo: true });
+        todos.push({ data: '', tipo: '💰 TOTAL ENTRADAS', descricao: 'Soma de todos os atendimentos', valor: totalEntradasCalc, isResumo: true });
+        todos.push({ data: '', tipo: '📤 TOTAL SAÍDAS', descricao: 'Reposições + Despesas', valor: totalSaidasCalc, isResumo: true });
+        todos.push({ data: '', tipo: '💎 SALDO TOTAL', descricao: 'Entradas - Saídas', valor: saldoCalc, isResumo: true, cor: saldoCalc >= 0 ? '#03DAC6' : '#CF6679' });
+        todos.push({ data: '', tipo: '---', descricao: '---', valor: 0, isResumo: true });
         
-        todos.push({ 
-            data: '', 
-            tipo: '💰 TOTAL ENTRADAS', 
-            descricao: 'Soma de todos os atendimentos', 
-            valor: totalEntradasCalc,
-            isResumo: true,
-            valorFormatado: `R$ ${totalEntradasCalc.toFixed(2)}`
-        });
-        
-        todos.push({ 
-            data: '', 
-            tipo: '📤 TOTAL SAÍDAS', 
-            descricao: 'Reposições + Despesas', 
-            valor: totalSaidasCalc,
-            isResumo: true,
-            valorFormatado: `R$ ${totalSaidasCalc.toFixed(2)}`
-        });
-        
-        const corSaldo = saldoCalc >= 0 ? '#03DAC6' : '#CF6679';
-        todos.push({ 
-            data: '', 
-            tipo: '💎 SALDO TOTAL', 
-            descricao: 'Entradas - Saídas', 
-            valor: saldoCalc,
-            isResumo: true,
-            cor: corSaldo,
-            valorFormatado: `R$ ${Math.abs(saldoCalc).toFixed(2)}`
-        });
-        
-        todos.push({ 
-            data: '', 
-            tipo: '---', 
-            descricao: '---', 
-            valor: 0,
-            isResumo: true 
-        });
-        
-        // Adicionar atendimentos (entradas)
         for (const a of atendimentos) {
-            todos.push({ 
-                data: a.data, 
-                tipo: '💰 ENTRADA', 
-                descricao: `${a.nome_cliente} - ${a.servico || 'Atendimento'}`, 
-                valor: a.valor,
-                isResumo: false
-            });
+            todos.push({ data: a.data, tipo: '💰 ENTRADA', descricao: `${a.nome_cliente} - ${a.servico || 'Atendimento'}`, valor: a.valor, isResumo: false });
         }
         
-        // Adicionar reposições (saídas)
         for (const r of reposicoes) {
             const valorTotal = r.valor_total || r.valor || 0;
             const valorUnit = r.valor_unitario || (r.quantidade > 0 ? valorTotal / r.quantidade : 0);
-            todos.push({ 
-                data: r.data, 
-                tipo: '📦 SAÍDA - REPOSIÇÃO', 
-                descricao: `${r.produto} | ${r.quantidade || 0} un x R$ ${valorUnit.toFixed(2)} = R$ ${valorTotal.toFixed(2)}`, 
-                valor: -valorTotal,
-                isResumo: false
-            });
+            todos.push({ data: r.data, tipo: '📦 SAÍDA - REPOSIÇÃO', descricao: `${r.produto} | ${r.quantidade || 0} un x R$ ${valorUnit.toFixed(2)} = R$ ${valorTotal.toFixed(2)}`, valor: -valorTotal, isResumo: false });
         }
         
-        // Adicionar despesas (saídas)
         for (const d of despesas) {
-            todos.push({ 
-                data: d.data, 
-                tipo: '💸 SAÍDA - DESPESA', 
-                descricao: `${d.descricao || d.tipo} (${d.tipo})`, 
-                valor: -d.valor,
-                isResumo: false
-            });
+            todos.push({ data: d.data, tipo: '💸 SAÍDA - DESPESA', descricao: `${d.descricao || d.tipo} (${d.tipo})`, valor: -d.valor, isResumo: false });
         }
         
-        // Ordenar por data (mais recente primeiro), mas manter resumo no topo
         const itensOrdenados = todos.filter(t => !t.isResumo);
         itensOrdenados.sort((a, b) => b.data.localeCompare(a.data));
-        
         const todosOrdenados = [...todos.filter(t => t.isResumo), ...itensOrdenados];
         
         const tbody = document.querySelector('#tabela-relatorios tbody');
@@ -414,7 +414,7 @@ async function carregarRelatorios() {
                         <td style="color: #BB86FC;">${item.data}</td>
                         <td style="color: #BB86FC;">${item.tipo}</td>
                         <td style="color: #9E9E9E;">${item.descricao}</td>
-                        <td style="color: ${cor}; font-size: 16px;">${item.valorFormatado || `R$ ${Math.abs(item.valor).toFixed(2)}`}</td>
+                        <td style="color: ${cor}; font-size: 16px;">R$ ${Math.abs(item.valor).toFixed(2)}</td>
                     </tr>
                 `;
             } else {
@@ -432,7 +432,6 @@ async function carregarRelatorios() {
         }).join('');
         
         console.log(`✅ ${itensOrdenados.length} registros no relatório`);
-        console.log(`📊 Totais - Entradas: R$ ${totalEntradasCalc.toFixed(2)}, Saídas: R$ ${totalSaidasCalc.toFixed(2)}, Saldo: R$ ${saldoCalc.toFixed(2)}`);
         
     } catch (error) {
         console.error('❌ Erro ao carregar relatórios:', error);
@@ -444,7 +443,6 @@ function exportarCSV() {
     const rows = document.querySelectorAll('#tabela-relatorios tr');
     const csv = [];
     
-    // Cabeçalho do CSV
     csv.push('"Data","Tipo","Descrição","Valor (R$)"');
     
     for (const row of rows) {
@@ -454,10 +452,7 @@ function exportarCSV() {
             const tipo = cols[1].innerText.replace(/"/g, '""');
             const descricao = cols[2].innerText.replace(/"/g, '""');
             let valor = cols[3].innerText.replace(/"/g, '""');
-            
-            // Limpar o valor (remover R$ e espaços)
             valor = valor.replace('R$', '').replace('+', '').replace('-', '').trim();
-            
             csv.push(`"${data}","${tipo}","${descricao}","${valor}"`);
         }
     }
@@ -543,7 +538,7 @@ async function salvarEdicaoReposicao() {
         valor_total: valorTotal,
         valor: valorTotal
     });
-    alert('✅ Reposição atualizada! (Total: R$ ' + valorTotal.toFixed(2) + ')');
+    alert(`✅ Reposição atualizada! (${quantidade} un x R$ ${valorUnitario.toFixed(2)} = R$ ${valorTotal.toFixed(2)})`);
     document.getElementById('modal-editar-reposicao').style.display = 'none';
     await carregarReposicoes();
     await carregarDashboard();
@@ -602,6 +597,7 @@ async function excluirDespesa() {
     }
 }
 
+// ============ FUNÇÕES GLOBAIS (para onclick) ============
 window.abrirModalAtendimento = abrirModalAtendimento;
 window.abrirModalReposicao = abrirModalReposicao;
 window.abrirModalDespesa = abrirModalDespesa;

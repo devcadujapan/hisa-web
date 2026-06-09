@@ -4,7 +4,7 @@ console.log('📦 database.js carregado!');
 class LocalDatabase {
     constructor() {
         this.dbName = 'HisaDB';
-        this.version = 5;
+        this.version = 6;
         this.db = null;
         this.ready = false;
     }
@@ -154,13 +154,12 @@ class LocalDatabase {
         const reposicoes = await this.getAll('reposicoes');
         const despesas = await this.getAll('despesas');
         
-        // Soma apenas os valores corretos
         const totalEntradas = atendimentos.reduce((sum, a) => sum + (a.valor || 0), 0);
         const totalReposicoes = reposicoes.reduce((sum, r) => sum + (r.valor_total || r.valor || 0), 0);
         const totalDespesas = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
         const totalSaidas = totalReposicoes + totalDespesas;
         
-        console.log('📊 Summary calculado:', { totalEntradas, totalReposicoes, totalDespesas, totalSaidas });
+        console.log('📊 Summary:', { totalEntradas, totalReposicoes, totalDespesas, totalSaidas });
         
         return {
             entradas: totalEntradas,
@@ -170,6 +169,8 @@ class LocalDatabase {
             despesas: totalDespesas
         };
     }
+}
 
+// Criar instância global
 const db = new LocalDatabase();
-console.log('📦 Instância do banco criada');
+console.log('📦 Instância do banco criada - aguardando init()');
