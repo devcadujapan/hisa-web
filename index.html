@@ -13,6 +13,9 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/LogoHisa01.png">
     <link rel="stylesheet" href="css/style.css">
+
+        <!-- Biblioteca para capturar tela -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="menu">
@@ -211,9 +214,12 @@
                 </div>
             </div>
             
-            <button id="btn-exportar-csv" style="margin-bottom: 20px;">📎 Exportar CSV</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button id="btn-exportar-csv" style="flex: 1; min-width: 120px;">📎 Exportar CSV</button>
+                <button id="btn-print-relatorio" style="flex: 1; min-width: 120px; background: #FF69B4;">📸 Salvar como Imagem</button>
+            </div>
             
-            <div class="table-container">
+            <div class="table-container" id="relatorio-para-imagem">
                 <table id="tabela-relatorios">
                     <thead>
                         <tr>

@@ -438,3 +438,35 @@ tr {
         margin: 5px 0;
     }
 }
+
+/* Estilos para captura de imagem */
+#relatorio-para-imagem {
+    background: #1E1E1E;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+/* Garantir que a tabela fique legível na imagem */
+#relatorio-para-imagem table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#relatorio-para-imagem th {
+    background: #2C2C2C;
+    color: #BB86FC;
+    padding: 12px;
+    font-size: 14px;
+}
+
+#relatorio-para-imagem td {
+    padding: 10px 8px;
+    font-size: 13px;
+    border-bottom: 1px solid #333;
+}
+
+/* Botão print com hover */
+#btn-print-relatorio:hover {
+    background: #FF85C1;
+    transform: translateY(-1px);
+}

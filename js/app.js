@@ -80,6 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btnExportar = document.getElementById('btn-exportar-csv');
         if (btnExportar) btnExportar.addEventListener('click', exportarCSV);
         
+        // Botão para salvar como imagem
+        const btnPrint = document.getElementById('btn-print-relatorio');
+        if (btnPrint) {
+            btnPrint.addEventListener('click', salvarRelatorioComoImagem);
+            console.log('✅ Botão print configurado');
+        }
+        
         configurarModais();
         
         // Carregar dados
@@ -372,7 +379,7 @@ async function carregarRelatorios() {
         const totalSaidasCalc = totalReposicoesCalc + totalDespesasCalc;
         const saldoCalc = totalEntradasCalc - totalSaidasCalc;
         
-        // Array para os cards de resumo (parte superior)
+        // Atualizar cards de resumo
         const cardsContainer = document.querySelector('.cards-resumo');
         if (cardsContainer) {
             cardsContainer.innerHTML = `
@@ -391,7 +398,7 @@ async function carregarRelatorios() {
             `;
         }
         
-        // Criar array para a tabela (apenas os registros)
+        // Criar array para a tabela
         const todos = [];
         
         for (const a of atendimentos) {
@@ -479,6 +486,44 @@ function exportarCSV() {
     link.click();
     URL.revokeObjectURL(url);
     console.log('✅ CSV exportado!');
+}
+
+// ============ FUNÇÃO PARA SALVAR COMO IMAGEM ============
+async function salvarRelatorioComoImagem() {
+    console.log('📸 Capturando relatório como imagem...');
+    
+    const btnPrint = document.getElementById('btn-print-relatorio');
+    const textoOriginal = btnPrint.innerHTML;
+    btnPrint.innerHTML = '⏳ Capturando...';
+    btnPrint.disabled = true;
+    
+    try {
+        const elemento = document.getElementById('relatorio-para-imagem');
+        
+        const canvas = await html2canvas(elemento, {
+            scale: 2,
+            backgroundColor: '#1E1E1E',
+            logging: false,
+            useCORS: true,
+            allowTaint: false
+        });
+        
+        const link = document.createElement('a');
+        const dataAtual = new Date().toISOString().split('T')[0];
+        link.download = `relatorio_hisa_${dataAtual}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        console.log('✅ Imagem salva com sucesso!');
+        alert('✅ Relatório salvo como imagem!');
+        
+    } catch (error) {
+        console.error('❌ Erro ao capturar imagem:', error);
+        alert('Erro ao salvar imagem: ' + error.message);
+    } finally {
+        btnPrint.innerHTML = textoOriginal;
+        btnPrint.disabled = false;
+    }
 }
 
 // ============ EDIÇÃO ATENDIMENTOS ============
