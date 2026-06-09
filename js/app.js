@@ -379,19 +379,25 @@ async function carregarRelatorios() {
         const totalSaidasCalc = totalReposicoesCalc + totalDespesasCalc;
         const saldoCalc = totalEntradasCalc - totalSaidasCalc;
         
+        // Salvar os totais em atributos data para a captura de imagem
+        document.body.setAttribute('data-total-entradas', totalEntradasCalc.toFixed(2));
+        document.body.setAttribute('data-total-saidas', totalSaidasCalc.toFixed(2));
+        document.body.setAttribute('data-total-saldo', saldoCalc.toFixed(2));
+        document.body.setAttribute('data-cor-saldo', saldoCalc >= 0 ? '#03DAC6' : '#CF6679');
+        
         // Atualizar cards de resumo
         const cardsContainer = document.querySelector('.cards-resumo');
         if (cardsContainer) {
             cardsContainer.innerHTML = `
-                <div class="card-resumo">
+                <div class="card-resumo" id="card-total-entradas">
                     <h3>💰 TOTAL ENTRADAS</h3>
                     <div class="valor" style="color: #03DAC6;">R$ ${totalEntradasCalc.toFixed(2)}</div>
                 </div>
-                <div class="card-resumo">
+                <div class="card-resumo" id="card-total-saidas">
                     <h3>📤 TOTAL SAÍDAS</h3>
                     <div class="valor" style="color: #CF6679;">R$ ${totalSaidasCalc.toFixed(2)}</div>
                 </div>
-                <div class="card-resumo">
+                <div class="card-resumo" id="card-total-saldo">
                     <h3>💎 SALDO TOTAL</h3>
                     <div class="valor" style="color: ${saldoCalc >= 0 ? '#03DAC6' : '#CF6679'};">R$ ${Math.abs(saldoCalc).toFixed(2)}</div>
                 </div>
@@ -453,6 +459,7 @@ async function carregarRelatorios() {
         }).join('');
         
         console.log(`✅ ${todos.length} registros no relatório`);
+        console.log(`📊 Totais - Entradas: R$ ${totalEntradasCalc.toFixed(2)}, Saídas: R$ ${totalSaidasCalc.toFixed(2)}, Saldo: R$ ${saldoCalc.toFixed(2)}`);
         
     } catch (error) {
         console.error('❌ Erro ao carregar relatórios:', error);
@@ -490,7 +497,7 @@ function exportarCSV() {
 
 // ============ FUNÇÃO PARA SALVAR COMO IMAGEM ============
 async function salvarRelatorioComoImagem() {
-    console.log('📸 Capturando relatório como imagem...');
+    console.log('📸 Capturando relatório completo como imagem...');
     
     const btnPrint = document.getElementById('btn-print-relatorio');
     const textoOriginal = btnPrint.innerHTML;
@@ -498,16 +505,115 @@ async function salvarRelatorioComoImagem() {
     btnPrint.disabled = true;
     
     try {
-        const elemento = document.getElementById('relatorio-para-imagem');
+        // Criar um clone do relatório para capturar
+        const originalElement = document.getElementById('relatorio-para-imagem');
+        const cloneContainer = document.createElement('div');
         
-        const canvas = await html2canvas(elemento, {
-            scale: 2,
+        // Clonar o conteúdo
+        const clone = originalElement.cloneNode(true);
+        clone.style.padding = '20px';
+        clone.style.background = '#1E1E1E';
+        clone.style.borderRadius = '12px';
+        
+        // Adicionar cabeçalho com os totais
+        const header = document.createElement('div');
+        header.style.marginBottom = '20px';
+        header.style.padding = '20px';
+        header.style.background = '#2C2C2C';
+        header.style.borderRadius = '12px';
+        header.style.display = 'flex';
+        header.style.gap = '15px';
+        header.style.flexWrap = 'wrap';
+        
+        // Pegar os valores atuais dos cards
+        const totalEntradas = document.querySelector('.card-resumo:first-child .valor')?.innerText || 'R$ 0,00';
+        const totalSaidas = document.querySelector('.card-resumo:nth-child(2) .valor')?.innerText || 'R$ 0,00';
+        const totalSaldo = document.querySelector('.card-resumo:nth-child(3) .valor')?.innerText || 'R$ 0,00';
+        const corSaldo = document.querySelector('.card-resumo:nth-child(3) .valor')?.style.color || '#03DAC6';
+        
+        header.innerHTML = `
+            <div style="flex: 1; background: #1E1E1E; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333;">
+                <h3 style="color: #9E9E9E; font-size: 12px; margin-bottom: 8px;">💰 TOTAL ENTRADAS</h3>
+                <div style="color: #03DAC6; font-size: 22px; font-weight: bold;">${totalEntradas}</div>
+            </div>
+            <div style="flex: 1; background: #1E1E1E; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333;">
+                <h3 style="color: #9E9E9E; font-size: 12px; margin-bottom: 8px;">📤 TOTAL SAÍDAS</h3>
+                <div style="color: #CF6679; font-size: 22px; font-weight: bold;">${totalSaidas}</div>
+            </div>
+            <div style="flex: 1; background: #1E1E1E; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333;">
+                <h3 style="color: #9E9E9E; font-size: 12px; margin-bottom: 8px;">💎 SALDO TOTAL</h3>
+                <div style="color: ${corSaldo}; font-size: 22px; font-weight: bold;">${totalSaldo}</div>
+            </div>
+        `;
+        
+        // Adicionar data e hora da captura
+        const dataHora = document.createElement('div');
+        const agora = new Date();
+        const dataFormatada = agora.toLocaleDateString('pt-BR');
+        const horaFormatada = agora.toLocaleTimeString('pt-BR');
+        dataHora.style.textAlign = 'center';
+        dataHora.style.marginBottom = '15px';
+        dataHora.style.padding = '10px';
+        dataHora.style.background = '#2C2C2C';
+        dataHora.style.borderRadius = '8px';
+        dataHora.style.color = '#9E9E9E';
+        dataHora.style.fontSize = '12px';
+        dataHora.innerHTML = `📅 Relatório gerado em ${dataFormatada} às ${horaFormatada}`;
+        
+        // Adicionar título
+        const titulo = document.createElement('div');
+        titulo.style.textAlign = 'center';
+        titulo.style.marginBottom = '20px';
+        titulo.style.padding = '15px';
+        titulo.style.background = '#FF69B4';
+        titulo.style.borderRadius = '12px';
+        titulo.style.color = 'white';
+        titulo.innerHTML = `
+            <h2 style="margin: 0;">💅 HISA - Relatório Geral</h2>
+            <small style="opacity: 0.8;">Sistema de Gestão para Estética</small>
+        `;
+        
+        // Montar o elemento completo para capturar
+        const elementoParaCapturar = document.createElement('div');
+        elementoParaCapturar.style.background = '#1E1E1E';
+        elementoParaCapturar.style.padding = '20px';
+        elementoParaCapturar.style.borderRadius = '16px';
+        elementoParaCapturar.style.maxWidth = '1200px';
+        elementoParaCapturar.style.margin = '0 auto';
+        
+        elementoParaCapturar.appendChild(titulo);
+        elementoParaCapturar.appendChild(dataHora);
+        elementoParaCapturar.appendChild(header);
+        elementoParaCapturar.appendChild(clone);
+        
+        // Adicionar rodapé
+        const footer = document.createElement('div');
+        footer.style.textAlign = 'center';
+        footer.style.marginTop = '20px';
+        footer.style.padding = '10px';
+        footer.style.fontSize = '10px';
+        footer.style.color = '#666';
+        footer.innerHTML = 'HISA - Sistema de Gestão | www.hisa.com';
+        elementoParaCapturar.appendChild(footer);
+        
+        // Adicionar temporariamente ao corpo para capturar
+        document.body.appendChild(elementoParaCapturar);
+        
+        // Capturar a imagem
+        const canvas = await html2canvas(elementoParaCapturar, {
+            scale: 2.5,
             backgroundColor: '#1E1E1E',
             logging: false,
             useCORS: true,
-            allowTaint: false
+            allowTaint: false,
+            windowWidth: elementoParaCapturar.scrollWidth,
+            windowHeight: elementoParaCapturar.scrollHeight
         });
         
+        // Remover o elemento temporário
+        document.body.removeChild(elementoParaCapturar);
+        
+        // Salvar a imagem
         const link = document.createElement('a');
         const dataAtual = new Date().toISOString().split('T')[0];
         link.download = `relatorio_hisa_${dataAtual}.png`;
@@ -515,7 +621,7 @@ async function salvarRelatorioComoImagem() {
         link.click();
         
         console.log('✅ Imagem salva com sucesso!');
-        alert('✅ Relatório salvo como imagem!');
+        alert('✅ Relatório salvo como imagem com todos os dados!');
         
     } catch (error) {
         console.error('❌ Erro ao capturar imagem:', error);
