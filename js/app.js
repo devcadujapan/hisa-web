@@ -365,73 +365,87 @@ async function carregarRelatorios() {
         const reposicoes = await db.getAll('reposicoes');
         const despesas = await db.getAll('despesas');
         
+        // Calcular totais
         const totalEntradasCalc = atendimentos.reduce((sum, a) => sum + (a.valor || 0), 0);
         const totalReposicoesCalc = reposicoes.reduce((sum, r) => sum + (r.valor_total || r.valor || 0), 0);
         const totalDespesasCalc = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
         const totalSaidasCalc = totalReposicoesCalc + totalDespesasCalc;
         const saldoCalc = totalEntradasCalc - totalSaidasCalc;
         
+        // Array para os cards de resumo (parte superior)
+        const cardsContainer = document.querySelector('.cards-resumo');
+        if (cardsContainer) {
+            cardsContainer.innerHTML = `
+                <div class="card-resumo">
+                    <h3>💰 TOTAL ENTRADAS</h3>
+                    <div class="valor" style="color: #03DAC6;">R$ ${totalEntradasCalc.toFixed(2)}</div>
+                </div>
+                <div class="card-resumo">
+                    <h3>📤 TOTAL SAÍDAS</h3>
+                    <div class="valor" style="color: #CF6679;">R$ ${totalSaidasCalc.toFixed(2)}</div>
+                </div>
+                <div class="card-resumo">
+                    <h3>💎 SALDO TOTAL</h3>
+                    <div class="valor" style="color: ${saldoCalc >= 0 ? '#03DAC6' : '#CF6679'};">R$ ${Math.abs(saldoCalc).toFixed(2)}</div>
+                </div>
+            `;
+        }
+        
+        // Criar array para a tabela (apenas os registros)
         const todos = [];
         
-        todos.push({ data: '', tipo: '📊 RESUMO', descricao: '==================', valor: 0, isResumo: true });
-        todos.push({ data: '', tipo: '💰 TOTAL ENTRADAS', descricao: 'Soma de todos os atendimentos', valor: totalEntradasCalc, isResumo: true });
-        todos.push({ data: '', tipo: '📤 TOTAL SAÍDAS', descricao: 'Reposições + Despesas', valor: totalSaidasCalc, isResumo: true });
-        todos.push({ data: '', tipo: '💎 SALDO TOTAL', descricao: 'Entradas - Saídas', valor: saldoCalc, isResumo: true, cor: saldoCalc >= 0 ? '#03DAC6' : '#CF6679' });
-        todos.push({ data: '', tipo: '---', descricao: '---', valor: 0, isResumo: true });
-        
         for (const a of atendimentos) {
-            todos.push({ data: a.data, tipo: '💰 ENTRADA', descricao: `${a.nome_cliente} - ${a.servico || 'Atendimento'}`, valor: a.valor, isResumo: false });
+            todos.push({ 
+                data: a.data, 
+                tipo: '💰 ENTRADA', 
+                descricao: `${a.nome_cliente} - ${a.servico || 'Atendimento'}`, 
+                valor: a.valor 
+            });
         }
         
         for (const r of reposicoes) {
             const valorTotal = r.valor_total || r.valor || 0;
             const valorUnit = r.valor_unitario || (r.quantidade > 0 ? valorTotal / r.quantidade : 0);
-            todos.push({ data: r.data, tipo: '📦 SAÍDA - REPOSIÇÃO', descricao: `${r.produto} | ${r.quantidade || 0} un x R$ ${valorUnit.toFixed(2)} = R$ ${valorTotal.toFixed(2)}`, valor: -valorTotal, isResumo: false });
+            todos.push({ 
+                data: r.data, 
+                tipo: '📦 SAÍDA - REPOSIÇÃO', 
+                descricao: `${r.produto} | ${r.quantidade || 0} un x R$ ${valorUnit.toFixed(2)} = R$ ${valorTotal.toFixed(2)}`, 
+                valor: -valorTotal 
+            });
         }
         
         for (const d of despesas) {
-            todos.push({ data: d.data, tipo: '💸 SAÍDA - DESPESA', descricao: `${d.descricao || d.tipo} (${d.tipo})`, valor: -d.valor, isResumo: false });
+            todos.push({ 
+                data: d.data, 
+                tipo: '💸 SAÍDA - DESPESA', 
+                descricao: `${d.descricao || d.tipo} (${d.tipo})`, 
+                valor: -d.valor 
+            });
         }
         
-        const itensOrdenados = todos.filter(t => !t.isResumo);
-        itensOrdenados.sort((a, b) => b.data.localeCompare(a.data));
-        const todosOrdenados = [...todos.filter(t => t.isResumo), ...itensOrdenados];
+        // Ordenar por data (mais recente primeiro)
+        todos.sort((a, b) => b.data.localeCompare(a.data));
         
         const tbody = document.querySelector('#tabela-relatorios tbody');
-        if (todosOrdenados.length === 0) {
+        if (todos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhum registro encontrado</td></tr>';
             return;
         }
         
-        tbody.innerHTML = todosOrdenados.map(item => {
-            if (item.isResumo) {
-                if (item.tipo === '---') {
-                    return `<tr style="background: #2C2C2C;"><td colspan="4" style="text-align: center; color: #BB86FC;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</td></tr>`;
-                }
-                const cor = item.cor || (item.valor >= 0 ? '#03DAC6' : '#CF6679');
-                return `
-                    <tr style="background: #2C2C2C; font-weight: bold;">
-                        <td style="color: #BB86FC;">${item.data}</td>
-                        <td style="color: #BB86FC;">${item.tipo}</td>
-                        <td style="color: #9E9E9E;">${item.descricao}</td>
-                        <td style="color: ${cor}; font-size: 16px;">R$ ${Math.abs(item.valor).toFixed(2)}</td>
-                    </tr>
-                `;
-            } else {
-                const cor = item.valor >= 0 ? '#03DAC6' : '#CF6679';
-                const sinal = item.valor >= 0 ? '+' : '-';
-                return `
-                    <tr>
-                        <td>${item.data}</td>
-                        <td>${item.tipo}</td>
-                        <td style="font-size: 12px;">${item.descricao}</td>
-                        <td style="color: ${cor}; font-weight: bold;">${sinal} R$ ${Math.abs(item.valor).toFixed(2)}</td>
-                    </tr>
-                `;
-            }
+        tbody.innerHTML = todos.map(item => {
+            const cor = item.valor >= 0 ? '#03DAC6' : '#CF6679';
+            const sinal = item.valor >= 0 ? '+' : '-';
+            return `
+                <tr>
+                    <td>${item.data}</td>
+                    <td>${item.tipo}</td>
+                    <td style="font-size: 12px;">${item.descricao}</td>
+                    <td style="color: ${cor}; font-weight: bold;">${sinal} R$ ${Math.abs(item.valor).toFixed(2)}</td>
+                </tr>
+            `;
         }).join('');
         
-        console.log(`✅ ${itensOrdenados.length} registros no relatório`);
+        console.log(`✅ ${todos.length} registros no relatório`);
         
     } catch (error) {
         console.error('❌ Erro ao carregar relatórios:', error);

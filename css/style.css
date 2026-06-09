@@ -392,3 +392,49 @@ button, .menu-btn, tr {
 tr {
     cursor: pointer;
 }
+
+/* Cards de Resumo do Relatório */
+.cards-resumo {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.card-resumo {
+    flex: 1;
+    background: #1E1E1E;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.card-resumo:hover {
+    border-color: #BB86FC;
+    transform: translateY(-2px);
+}
+
+.card-resumo h3 {
+    color: #9E9E9E;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.card-resumo .valor {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Responsivo para cards de resumo */
+@media (max-width: 768px) {
+    .cards-resumo {
+        flex-direction: column;
+    }
+    
+    .card-resumo {
+        margin: 5px 0;
+    }
+}

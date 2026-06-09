@@ -194,7 +194,25 @@
         <!-- Relatórios -->
         <div id="relatorios" class="pagina">
             <h1>📈 Relatório Geral</h1>
-            <button id="btn-exportar-csv">📎 Exportar CSV</button>
+            
+            <!-- Cards de Resumo -->
+            <div class="cards-resumo" style="display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+                <div class="card-resumo" style="flex: 1; background: #1E1E1E; padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
+                    <h3 style="color: #9E9E9E; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">💰 TOTAL ENTRADAS</h3>
+                    <div class="valor" style="color: #03DAC6; font-size: 24px; font-weight: bold;">R$ 0,00</div>
+                </div>
+                <div class="card-resumo" style="flex: 1; background: #1E1E1E; padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
+                    <h3 style="color: #9E9E9E; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">📤 TOTAL SAÍDAS</h3>
+                    <div class="valor" style="color: #CF6679; font-size: 24px; font-weight: bold;">R$ 0,00</div>
+                </div>
+                <div class="card-resumo" style="flex: 1; background: #1E1E1E; padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
+                    <h3 style="color: #9E9E9E; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">💎 SALDO TOTAL</h3>
+                    <div class="valor" style="color: #BB86FC; font-size: 24px; font-weight: bold;">R$ 0,00</div>
+                </div>
+            </div>
+            
+            <button id="btn-exportar-csv" style="margin-bottom: 20px;">📎 Exportar CSV</button>
+            
             <div class="table-container">
                 <table id="tabela-relatorios">
                     <thead>
@@ -213,7 +231,6 @@
                 </table>
             </div>
         </div>
-    </div>
 
     <!-- Modal de Edição de Atendimento -->
     <div id="modal-editar-atendimento" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; padding: 20px; overflow-y: auto;">
