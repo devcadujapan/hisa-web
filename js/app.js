@@ -5,7 +5,6 @@ console.log('🚀 App.js carregado!');
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('📄 DOM carregado');
     
-    // Aguardar db ficar pronto
     if (typeof db === 'undefined') {
         console.error('❌ db não encontrado!');
         alert('Erro de inicialização. Recarregue a página.');
@@ -15,13 +14,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     await db.init();
     console.log('✅ DB inicializado');
     
-    // Configurar data atual
     const hoje = new Date().toISOString().split('T')[0];
     document.querySelectorAll('input[type="date"]').forEach(input => {
         if (!input.value) input.value = hoje;
     });
     
-    // Configurar navegação
     document.querySelectorAll('.menu-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const pagina = btn.getAttribute('data-pagina');
@@ -29,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     
-    // Configurar botões de + e -
     document.querySelectorAll('.btn-plus, .btn-minus').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -41,36 +37,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 value += btn.classList.contains('btn-plus') ? step : -step;
                 if (value < 0) value = 0;
                 input.value = value;
+                if (targetId === 'rep-qtd' || targetId === 'rep-valor') {
+                    calcularValorUnitario();
+                }
             }
         });
     });
     
-    // Configurar botões de salvar
-    const btnAtendimento = document.getElementById('btn-salvar-atendimento');
-    if (btnAtendimento) {
-        btnAtendimento.addEventListener('click', salvarAtendimento);
-        console.log('✅ Botão atendimento configurado');
-    }
+    const repQtd = document.getElementById('rep-qtd');
+    const repValor = document.getElementById('rep-valor');
+    if (repQtd) repQtd.addEventListener('input', calcularValorUnitario);
+    if (repValor) repValor.addEventListener('input', calcularValorUnitario);
     
-    const btnReposicao = document.getElementById('btn-salvar-reposicao');
-    if (btnReposicao) {
-        btnReposicao.addEventListener('click', salvarReposicao);
-        console.log('✅ Botão reposição configurado');
-    }
+    document.getElementById('btn-salvar-atendimento')?.addEventListener('click', salvarAtendimento);
+    document.getElementById('btn-salvar-reposicao')?.addEventListener('click', salvarReposicao);
+    document.getElementById('btn-salvar-despesa')?.addEventListener('click', salvarDespesa);
+    document.getElementById('btn-exportar-csv')?.addEventListener('click', exportarCSV);
     
-    const btnDespesa = document.getElementById('btn-salvar-despesa');
-    if (btnDespesa) {
-        btnDespesa.addEventListener('click', salvarDespesa);
-        console.log('✅ Botão despesa configurado');
-    }
+    configurarModais();
     
-    const btnExportar = document.getElementById('btn-exportar-csv');
-    if (btnExportar) {
-        btnExportar.addEventListener('click', exportarCSV);
-        console.log('✅ Botão exportar configurado');
-    }
-    
-    // Carregar dados
     await carregarDashboard();
     await carregarAtendimentos();
     await carregarReposicoes();
@@ -80,22 +65,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✅ App inicializado com sucesso!');
 });
 
+function calcularValorUnitario() {
+    const qtd = parseFloat(document.getElementById('rep-qtd')?.value) || 0;
+    const valorTotal = parseFloat(document.getElementById('rep-valor')?.value) || 0;
+    const label = document.getElementById('valor-unitario-label');
+    
+    if (label && qtd > 0) {
+        const valorUnitario = valorTotal / qtd;
+        label.innerHTML = `💰 Valor unitário: R$ ${valorUnitario.toFixed(2)}`;
+    } else if (label) {
+        label.innerHTML = `💰 Valor unitário: R$ 0,00`;
+    }
+}
+
+function configurarModais() {
+    document.getElementById('btn-fechar-modal-atendimento')?.addEventListener('click', () => {
+        document.getElementById('modal-editar-atendimento').style.display = 'none';
+    });
+    document.getElementById('btn-salvar-edicao-atendimento')?.addEventListener('click', salvarEdicaoAtendimento);
+    document.getElementById('btn-excluir-atendimento')?.addEventListener('click', excluirAtendimento);
+    
+    document.getElementById('btn-fechar-modal-reposicao')?.addEventListener('click', () => {
+        document.getElementById('modal-editar-reposicao').style.display = 'none';
+    });
+    document.getElementById('btn-salvar-edicao-reposicao')?.addEventListener('click', salvarEdicaoReposicao);
+    document.getElementById('btn-excluir-reposicao')?.addEventListener('click', excluirReposicao);
+    
+    document.getElementById('btn-fechar-modal-despesa')?.addEventListener('click', () => {
+        document.getElementById('modal-editar-despesa').style.display = 'none';
+    });
+    document.getElementById('btn-salvar-edicao-despesa')?.addEventListener('click', salvarEdicaoDespesa);
+    document.getElementById('btn-excluir-despesa')?.addEventListener('click', excluirDespesa);
+}
+
 function mudarPagina(pagina) {
-    // Atualizar menu
     document.querySelectorAll('.menu-btn').forEach(btn => {
         btn.classList.remove('ativo');
         if (btn.getAttribute('data-pagina') === pagina) {
             btn.classList.add('ativo');
         }
     });
-    
-    // Atualizar conteúdo
     document.querySelectorAll('.pagina').forEach(page => {
         page.classList.remove('ativa');
     });
     document.getElementById(pagina).classList.add('ativa');
     
-    // Recarregar dados
     if (pagina === 'dashboard') carregarDashboard();
     else if (pagina === 'atendimentos') carregarAtendimentos();
     else if (pagina === 'reposicoes') carregarReposicoes();
@@ -103,270 +117,298 @@ function mudarPagina(pagina) {
     else if (pagina === 'relatorios') carregarRelatorios();
 }
 
-// Dashboard
 async function carregarDashboard() {
-    console.log('📊 Carregando dashboard...');
     try {
         const summary = await db.getSummary();
         document.getElementById('total-entradas').innerHTML = `R$ ${summary.entradas.toFixed(2)}`;
         document.getElementById('total-saidas').innerHTML = `R$ ${summary.saidas.toFixed(2)}`;
         document.getElementById('total-saldo').innerHTML = `R$ ${summary.saldo.toFixed(2)}`;
-        console.log('✅ Dashboard atualizado');
     } catch (error) {
         console.error('❌ Erro no dashboard:', error);
     }
 }
 
-// Atendimentos
 async function carregarAtendimentos() {
-    console.log('💝 Carregando atendimentos...');
     try {
         const atendimentos = await db.getAllOrdered('atendimentos');
         const tbody = document.querySelector('#tabela-atendimentos tbody');
-        
         if (!atendimentos || atendimentos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center">Nenhum atendimento registrado</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhum atendimento registrado</td></tr>';
             return;
         }
-        
         tbody.innerHTML = atendimentos.map(item => `
-            <tr>
-                <td>${item.data}</td>
-                <td>${item.nome_cliente}</td>
-                <td>R$ ${(item.valor || 0).toFixed(2)}</td>
+            <tr style="cursor: pointer;" onclick="abrirModalAtendimento(${item.id})">
+                <td>${item.data}</td><td>${item.nome_cliente}</td><td>${item.servico || '-'}</td><td>R$ ${(item.valor || 0).toFixed(2)}</td>
             </tr>
         `).join('');
-        console.log(`✅ ${atendimentos.length} atendimentos carregados`);
     } catch (error) {
         console.error('❌ Erro ao carregar atendimentos:', error);
     }
 }
 
 async function salvarAtendimento() {
-    console.log('💾 Salvando atendimento...');
     try {
         const data = document.getElementById('att-data').value;
         const cliente = document.getElementById('att-cliente').value.trim();
+        const servico = document.getElementById('att-servico').value.trim();
         const valor = parseFloat(document.getElementById('att-valor').value);
-        
-        if (!cliente) {
-            alert('Digite o nome da cliente!');
-            return;
-        }
-        
-        if (valor <= 0) {
-            alert('Digite um valor válido!');
-            return;
-        }
-        
-        await db.add('atendimentos', {
-            data: data,
-            nome_cliente: cliente,
-            valor: valor
-        });
-        
-        alert('✅ Atendimento salvo com sucesso!');
-        
+        if (!cliente) { alert('Digite o nome da cliente!'); return; }
+        if (!servico) { alert('Digite o tipo de serviço!'); return; }
+        if (valor <= 0) { alert('Digite um valor válido!'); return; }
+        await db.add('atendimentos', { data, nome_cliente: cliente, servico, valor });
+        alert('✅ Atendimento salvo!');
         document.getElementById('att-cliente').value = '';
+        document.getElementById('att-servico').value = '';
         document.getElementById('att-valor').value = 0;
-        
         await carregarAtendimentos();
         await carregarDashboard();
         await carregarRelatorios();
-        
     } catch (error) {
-        console.error('❌ Erro ao salvar atendimento:', error);
+        console.error('❌ Erro:', error);
         alert('Erro ao salvar: ' + error.message);
     }
 }
 
-// Reposições
 async function carregarReposicoes() {
-    console.log('📦 Carregando reposições...');
     try {
         const reposicoes = await db.getAllOrdered('reposicoes');
         const tbody = document.querySelector('#tabela-reposicoes tbody');
-        
         if (!reposicoes || reposicoes.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhuma reposição registrada</td></tr>';
             return;
         }
-        
         tbody.innerHTML = reposicoes.map(item => `
-            <tr>
-                <td>${item.data}</td>
-                <td>${item.produto}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${(item.valor || 0).toFixed(2)}</td>
+            <tr style="cursor: pointer;" onclick="abrirModalReposicao(${item.id})">
+                <td>${item.data}</td><td>${item.produto}</td><td>${item.quantidade}</td><td>R$ ${(item.valor || 0).toFixed(2)}</td>
             </tr>
         `).join('');
-        console.log(`✅ ${reposicoes.length} reposições carregadas`);
     } catch (error) {
         console.error('❌ Erro ao carregar reposições:', error);
     }
 }
 
 async function salvarReposicao() {
-    console.log('💾 Salvando reposição...');
     try {
         const data = document.getElementById('rep-data').value;
         const produto = document.getElementById('rep-produto').value.trim();
         const quantidade = parseInt(document.getElementById('rep-qtd').value);
         const valor = parseFloat(document.getElementById('rep-valor').value);
-        
-        if (!produto) {
-            alert('Digite o nome do produto!');
-            return;
-        }
-        
-        if (quantidade <= 0) {
-            alert('Digite uma quantidade válida!');
-            return;
-        }
-        
-        if (valor <= 0) {
-            alert('Digite um valor válido!');
-            return;
-        }
-        
-        await db.add('reposicoes', {
-            data: data,
-            produto: produto,
-            quantidade: quantidade,
-            valor: valor
-        });
-        
-        alert('✅ Reposição salva com sucesso!');
-        
+        if (!produto) { alert('Digite o nome do produto!'); return; }
+        if (quantidade <= 0) { alert('Digite uma quantidade válida!'); return; }
+        if (valor <= 0) { alert('Digite um valor válido!'); return; }
+        await db.add('reposicoes', { data, produto, quantidade, valor });
+        alert('✅ Reposição salva!');
         document.getElementById('rep-produto').value = '';
         document.getElementById('rep-qtd').value = 0;
         document.getElementById('rep-valor').value = 0;
-        
         await carregarReposicoes();
         await carregarDashboard();
         await carregarRelatorios();
-        
     } catch (error) {
-        console.error('❌ Erro ao salvar reposição:', error);
+        console.error('❌ Erro:', error);
         alert('Erro ao salvar: ' + error.message);
     }
 }
 
-// Despesas
 async function carregarDespesas() {
-    console.log('💰 Carregando despesas...');
     try {
         const despesas = await db.getAllOrdered('despesas');
         const tbody = document.querySelector('#tabela-despesas tbody');
-        
         if (!despesas || despesas.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center">Nenhuma despesa registrada</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhuma despesa registrada</td></tr>';
             return;
         }
-        
         tbody.innerHTML = despesas.map(item => `
-            <tr>
-                <td>${item.data}</td>
-                <td>${item.tipo}</td>
-                <td>R$ ${(item.valor || 0).toFixed(2)}</td>
+            <tr style="cursor: pointer;" onclick="abrirModalDespesa(${item.id})">
+                <td>${item.data}</td><td>${item.descricao || '-'}</td><td>${item.tipo || '-'}</td><td>R$ ${(item.valor || 0).toFixed(2)}</td>
             </tr>
         `).join('');
-        console.log(`✅ ${despesas.length} despesas carregadas`);
     } catch (error) {
         console.error('❌ Erro ao carregar despesas:', error);
     }
 }
 
 async function salvarDespesa() {
-    console.log('💾 Salvando despesa...');
     try {
         const data = document.getElementById('desp-data').value;
+        const descricao = document.getElementById('desp-descricao').value.trim();
         const tipo = document.getElementById('desp-tipo').value;
         const valor = parseFloat(document.getElementById('desp-valor').value);
-        
-        if (valor <= 0) {
-            alert('Digite um valor válido!');
-            return;
-        }
-        
-        await db.add('despesas', {
-            data: data,
-            tipo: tipo,
-            valor: valor
-        });
-        
-        alert('✅ Despesa salva com sucesso!');
-        
+        if (!descricao) { alert('Digite a descrição da despesa!'); return; }
+        if (!tipo) { alert('Selecione uma categoria!'); return; }
+        if (valor <= 0) { alert('Digite um valor válido!'); return; }
+        await db.add('despesas', { data, descricao, tipo, valor });
+        alert('✅ Despesa salva!');
+        document.getElementById('desp-descricao').value = '';
+        document.getElementById('desp-tipo').value = '';
         document.getElementById('desp-valor').value = 0;
-        
         await carregarDespesas();
         await carregarDashboard();
         await carregarRelatorios();
-        
     } catch (error) {
-        console.error('❌ Erro ao salvar despesa:', error);
+        console.error('❌ Erro:', error);
         alert('Erro ao salvar: ' + error.message);
     }
 }
 
-// Relatórios
 async function carregarRelatorios() {
-    console.log('📈 Carregando relatórios...');
     try {
         const atendimentos = await db.getAll('atendimentos');
         const reposicoes = await db.getAll('reposicoes');
         const despesas = await db.getAll('despesas');
-        
         const todos = [
-            ...atendimentos.map(a => ({ data: a.data, tipo: '💰 Entrada', descricao: a.nome_cliente, valor: a.valor })),
-            ...reposicoes.map(r => ({ data: r.data, tipo: '📦 Saída', descricao: `${r.produto} (${r.quantidade} un)`, valor: -r.valor })),
-            ...despesas.map(d => ({ data: d.data, tipo: '💸 Saída', descricao: d.tipo, valor: -d.valor }))
+            ...atendimentos.map(a => ({ data: a.data, tipo: '💰 Entrada', descricao: `${a.nome_cliente} - ${a.servico || 'Serviço'}`, valor: a.valor })),
+            ...reposicoes.map(r => ({ data: r.data, tipo: '📦 Saída', descricao: `${r.produto} (${r.quantidade} un - R$ ${(r.valor/r.quantidade).toFixed(2)}/un)`, valor: -r.valor })),
+            ...despesas.map(d => ({ data: d.data, tipo: '💸 Saída', descricao: `${d.descricao} - ${d.tipo}`, valor: -d.valor }))
         ];
-        
         todos.sort((a, b) => b.data.localeCompare(a.data));
-        
         const tbody = document.querySelector('#tabela-relatorios tbody');
-        
         if (todos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhum registro encontrado</td></tr>';
             return;
         }
-        
         tbody.innerHTML = todos.map(item => `
-            <tr>
-                <td>${item.data}</td>
-                <td>${item.tipo}</td>
-                <td>${item.descricao}</td>
-                <td style="color: ${item.valor >= 0 ? '#03DAC6' : '#CF6679'}">
-                    R$ ${Math.abs(item.valor).toFixed(2)}
-                </td>
-            </tr>
+            <tr><td>${item.data}</td><td>${item.tipo}</td><td>${item.descricao}</td><td style="color: ${item.valor >= 0 ? '#03DAC6' : '#CF6679'}">R$ ${Math.abs(item.valor).toFixed(2)}</td></tr>
         `).join('');
-        
-        console.log(`✅ ${todos.length} registros no relatório`);
     } catch (error) {
         console.error('❌ Erro ao carregar relatórios:', error);
     }
 }
 
 function exportarCSV() {
-    console.log('📎 Exportando CSV...');
     const rows = document.querySelectorAll('#tabela-relatorios tr');
     const csv = [];
-    
     for (const row of rows) {
         const cols = row.querySelectorAll('th, td');
         csv.push(Array.from(cols).map(col => col.innerText).join(','));
     }
-    
     const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
     link.href = url;
     link.download = `relatorio_hisa_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    
     URL.revokeObjectURL(url);
-    console.log('✅ CSV exportado!');
 }
+
+// Funções de edição
+async function abrirModalAtendimento(id) {
+    const atendimentos = await db.getAll('atendimentos');
+    const item = atendimentos.find(a => a.id === id);
+    if (item) {
+        document.getElementById('edit-att-id').value = item.id;
+        document.getElementById('edit-att-data').value = item.data;
+        document.getElementById('edit-att-cliente').value = item.nome_cliente;
+        document.getElementById('edit-att-servico').value = item.servico || '';
+        document.getElementById('edit-att-valor').value = item.valor;
+        document.getElementById('modal-editar-atendimento').style.display = 'block';
+    }
+}
+
+async function salvarEdicaoAtendimento() {
+    const id = parseInt(document.getElementById('edit-att-id').value);
+    const data = document.getElementById('edit-att-data').value;
+    const cliente = document.getElementById('edit-att-cliente').value;
+    const servico = document.getElementById('edit-att-servico').value;
+    const valor = parseFloat(document.getElementById('edit-att-valor').value);
+    await db.update('atendimentos', id, { data, nome_cliente: cliente, servico, valor });
+    alert('✅ Atendimento atualizado!');
+    document.getElementById('modal-editar-atendimento').style.display = 'none';
+    await carregarAtendimentos();
+    await carregarDashboard();
+    await carregarRelatorios();
+}
+
+async function excluirAtendimento() {
+    if (confirm('Tem certeza que deseja excluir este atendimento?')) {
+        const id = parseInt(document.getElementById('edit-att-id').value);
+        await db.delete('atendimentos', id);
+        alert('✅ Atendimento excluído!');
+        document.getElementById('modal-editar-atendimento').style.display = 'none';
+        await carregarAtendimentos();
+        await carregarDashboard();
+        await carregarRelatorios();
+    }
+}
+
+async function abrirModalReposicao(id) {
+    const reposicoes = await db.getAll('reposicoes');
+    const item = reposicoes.find(r => r.id === id);
+    if (item) {
+        document.getElementById('edit-rep-id').value = item.id;
+        document.getElementById('edit-rep-data').value = item.data;
+        document.getElementById('edit-rep-produto').value = item.produto;
+        document.getElementById('edit-rep-qtd').value = item.quantidade;
+        document.getElementById('edit-rep-valor').value = item.valor;
+        document.getElementById('modal-editar-reposicao').style.display = 'block';
+    }
+}
+
+async function salvarEdicaoReposicao() {
+    const id = parseInt(document.getElementById('edit-rep-id').value);
+    const data = document.getElementById('edit-rep-data').value;
+    const produto = document.getElementById('edit-rep-produto').value;
+    const quantidade = parseInt(document.getElementById('edit-rep-qtd').value);
+    const valor = parseFloat(document.getElementById('edit-rep-valor').value);
+    await db.update('reposicoes', id, { data, produto, quantidade, valor });
+    alert('✅ Reposição atualizada!');
+    document.getElementById('modal-editar-reposicao').style.display = 'none';
+    await carregarReposicoes();
+    await carregarDashboard();
+    await carregarRelatorios();
+}
+
+async function excluirReposicao() {
+    if (confirm('Tem certeza que deseja excluir esta reposição?')) {
+        const id = parseInt(document.getElementById('edit-rep-id').value);
+        await db.delete('reposicoes', id);
+        alert('✅ Reposição excluída!');
+        document.getElementById('modal-editar-reposicao').style.display = 'none';
+        await carregarReposicoes();
+        await carregarDashboard();
+        await carregarRelatorios();
+    }
+}
+
+async function abrirModalDespesa(id) {
+    const despesas = await db.getAll('despesas');
+    const item = despesas.find(d => d.id === id);
+    if (item) {
+        document.getElementById('edit-desp-id').value = item.id;
+        document.getElementById('edit-desp-data').value = item.data;
+        document.getElementById('edit-desp-descricao').value = item.descricao || '';
+        document.getElementById('edit-desp-tipo').value = item.tipo || '';
+        document.getElementById('edit-desp-valor').value = item.valor;
+        document.getElementById('modal-editar-despesa').style.display = 'block';
+    }
+}
+
+async function salvarEdicaoDespesa() {
+    const id = parseInt(document.getElementById('edit-desp-id').value);
+    const data = document.getElementById('edit-desp-data').value;
+    const descricao = document.getElementById('edit-desp-descricao').value;
+    const tipo = document.getElementById('edit-desp-tipo').value;
+    const valor = parseFloat(document.getElementById('edit-desp-valor').value);
+    await db.update('despesas', id, { data, descricao, tipo, valor });
+    alert('✅ Despesa atualizada!');
+    document.getElementById('modal-editar-despesa').style.display = 'none';
+    await carregarDespesas();
+    await carregarDashboard();
+    await carregarRelatorios();
+}
+
+async function excluirDespesa() {
+    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+        const id = parseInt(document.getElementById('edit-desp-id').value);
+        await db.delete('despesas', id);
+        alert('✅ Despesa excluída!');
+        document.getElementById('modal-editar-despesa').style.display = 'none';
+        await carregarDespesas();
+        await carregarDashboard();
+        await carregarRelatorios();
+    }
+}
+
+window.abrirModalAtendimento = abrirModalAtendimento;
+window.abrirModalReposicao = abrirModalReposicao;
+window.abrirModalDespesa = abrirModalDespesa;

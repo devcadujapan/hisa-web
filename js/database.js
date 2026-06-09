@@ -4,7 +4,7 @@ console.log('📦 database.js carregado!');
 class LocalDatabase {
     constructor() {
         this.dbName = 'HisaDB';
-        this.version = 2;
+        this.version = 4;
         this.db = null;
         this.ready = false;
     }
@@ -90,6 +90,46 @@ class LocalDatabase {
         return items.sort((a, b) => b.data.localeCompare(a.data));
     }
 
+    async update(storeName, id, newData) {
+        if (!this.ready) await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.get(id);
+            
+            request.onsuccess = () => {
+                const oldData = request.result;
+                if (!oldData) {
+                    reject(new Error('Registro não encontrado'));
+                    return;
+                }
+                const updatedData = { ...oldData, ...newData };
+                const updateRequest = store.put(updatedData);
+                updateRequest.onsuccess = () => {
+                    console.log(`✅ Atualizado em ${storeName}:`, updatedData);
+                    resolve(updatedData);
+                };
+                updateRequest.onerror = () => reject(updateRequest.error);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async delete(storeName, id) {
+        if (!this.ready) await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(id);
+            
+            request.onsuccess = () => {
+                console.log(`✅ Deletado de ${storeName}: id ${id}`);
+                resolve();
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     async clear(storeName) {
         if (!this.ready) await this.init();
         return new Promise((resolve, reject) => {
@@ -129,6 +169,5 @@ class LocalDatabase {
     }
 }
 
-// Criar instância global
 const db = new LocalDatabase();
 console.log('📦 Instância do banco criada');
