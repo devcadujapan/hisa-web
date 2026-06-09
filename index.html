@@ -13,17 +13,12 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/LogoHisa01.png">
     <link rel="stylesheet" href="css/style.css">
-
-        <!-- Biblioteca para capturar tela -->
+    
+    <!-- Biblioteca para capturar tela -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="menu">
-        <div class="logo-area">
-            <img src="icons/LogoHisa01.png" alt="HISA" class="logo-img" onerror="this.src='https://via.placeholder.com/100?text=HISA'">
-            <h2>HISA</h2>
-            <small>BROWS & LASH LIFT</small>
-        </div>
         <button class="menu-btn ativo" data-pagina="dashboard">
             <span class="nav-icon">📊</span>
             <span>Dashboard</span>
@@ -49,7 +44,12 @@
     <div class="conteudo">
         <!-- Dashboard -->
         <div id="dashboard" class="pagina ativa">
-            <h1>📊 Dashboard</h1>
+            <div class="dashboard-header" style="text-align: center; margin-bottom: 30px;">
+                <img src="icons/LogoHisa01.png" alt="HISA" class="dashboard-logo" onerror="this.src='https://via.placeholder.com/120?text=HISA'">
+                <h1 style="color: #FF69B4; margin-top: 15px; margin-bottom: 5px;">HISA</h1>
+                <p style="color: #9E9E9E; font-size: 14px;">BROWS & LASH LIFT</p>
+            </div>
+            
             <div class="cards">
                 <div class="card">
                     <h3>💰 Total Entradas</h3>
@@ -237,6 +237,7 @@
                 </table>
             </div>
         </div>
+    </div>
 
     <!-- Modal de Edição de Atendimento -->
     <div id="modal-editar-atendimento" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; padding: 20px; overflow-y: auto;">

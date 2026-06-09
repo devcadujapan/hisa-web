@@ -279,33 +279,6 @@ h1 {
         border-top: none;
     }
     
-    .logo-area {
-        display: block;
-        text-align: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #333;
-    }
-    
-    .logo-img {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-bottom: 10px;
-        border: 3px solid #FF69B4;
-    }
-    
-    .logo-area h2 {
-        color: #FF69B4;
-        font-size: 20px;
-    }
-    
-    .logo-area small {
-        color: #9E9E9E;
-        font-size: 10px;
-    }
-    
     .menu-btn {
         flex-direction: row;
         justify-content: flex-start;
@@ -469,4 +442,36 @@ tr {
 #btn-print-relatorio:hover {
     background: #FF85C1;
     transform: translateY(-1px);
+}
+
+/* Logo do Dashboard */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1E1E1E 0%, #2C2C2C 100%);
+    border-radius: 20px;
+    border: 1px solid #333;
+}
+
+.dashboard-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #FF69B4;
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+}
+
+/* Responsivo para o logo no dashboard */
+@media (max-width: 768px) {
+    .dashboard-logo {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .dashboard-header {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
 }

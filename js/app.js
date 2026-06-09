@@ -560,17 +560,24 @@ async function salvarRelatorioComoImagem() {
         dataHora.style.fontSize = '12px';
         dataHora.innerHTML = `📅 Relatório gerado em ${dataFormatada} às ${horaFormatada}`;
         
-        // Adicionar título
+        // Adicionar título com logo
         const titulo = document.createElement('div');
         titulo.style.textAlign = 'center';
         titulo.style.marginBottom = '20px';
-        titulo.style.padding = '15px';
-        titulo.style.background = '#FF69B4';
-        titulo.style.borderRadius = '12px';
-        titulo.style.color = 'white';
-        titulo.innerHTML = `
-            <h2 style="margin: 0;">💅 HISA - Relatório Geral</h2>
-            <small style="opacity: 0.8;">Sistema de Gestão para Estética</small>
+        titulo.style.padding = '20px';
+        titulo.style.background = 'linear-gradient(135deg, #1E1E1E 0%, #2C2C2C 100%)';
+        titulo.style.borderRadius = '16px';
+        titulo.style.border = '1px solid #333';
+        
+        // Tentar carregar o logo para o print
+        const logoTitulo = document.createElement('div');
+        logoTitulo.style.marginBottom = '15px';
+        logoTitulo.innerHTML = `<img src="icons/LogoHisa01.png" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #FF69B4;">`;
+        
+        titulo.appendChild(logoTitulo);
+        titulo.innerHTML += `
+            <h2 style="margin: 0; color: #FF69B4;">💅 HISA - Relatório Geral</h2>
+            <small style="opacity: 0.8; color: #9E9E9E;">Sistema de Gestão para Estética</small>
         `;
         
         // Montar o elemento completo para capturar
