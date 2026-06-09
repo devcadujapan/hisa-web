@@ -1,54 +1,45 @@
-# 💅 HISA-Web - Sistema de Gestão para Studio de Estética
+# 💅 HISA PWA - Sistema de Gestão para Studio de Estética
 
-![License](https://img.shields.io/badge/License-MIT-purple.svg)
-![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)
-![Express](https://img.shields.io/badge/Express-4.18.x-blue.svg)
-![SQLite](https://img.shields.io/badge/SQLite-3.x-orange.svg)
-![Chart.js](https://img.shields.io/badge/Chart.js-4.4.x-red.svg)
-![License](https://img.shields.io/badge/License-MIT-purple.svg)
+![PWA](https://img.shields.io/badge/PWA-✅-purple.svg)
 ![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-brightgreen.svg)
+![License](https://img.shields.io/badge/License-Private-red.svg)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 
-> **HISA-Web** é um sistema completo de gestão financeira para estúdios de estética, especialmente desenvolvido para funcionar em **qualquer dispositivo** com navegador - iPad, iPhone, Android, Windows ou Mac.
-
-## ✨ Demonstração
-
-![Dashboard](https://via.placeholder.com/800x400/1E1E1E/FFFFFF?text=HISA+Web+Dashboard)
+> **HISA PWA** é um sistema completo de gestão financeira para estúdios de estética, desenvolvido como **Progressive Web App (PWA)** para funcionar em **qualquer dispositivo** com navegador - iPad, iPhone, Android, Windows ou Mac.
 
 ## 📱 Compatibilidade
 
-| Dispositivo | Navegador | Status |
-|-------------|-----------|--------|
-| iPhone | Safari, Chrome | ✅ 100% |
-| iPad | Safari, Chrome | ✅ 100% |
-| Android | Chrome, Firefox | ✅ 100% |
-| Windows | Chrome, Edge | ✅ 100% |
-| Mac | Safari, Chrome | ✅ 100% |
+| Dispositivo | Navegador | Status | Instalável |
+|-------------|-----------|--------|------------|
+| iPhone | Safari, Chrome | ✅ 100% | ✅ Sim |
+| iPad | Safari, Chrome | ✅ 100% | ✅ Sim |
+| Android | Chrome, Firefox | ✅ 100% | ✅ Sim |
+| Windows | Chrome, Edge | ✅ 100% | ✅ Sim |
+| Mac | Safari, Chrome | ✅ 100% | ✅ Sim |
 
 ## 🎯 Funcionalidades
 
 ### 📊 Dashboard Interativo
 - Cards com resumo financeiro (Entradas, Saídas, Saldo)
-- Gráfico de barras comparativo
-- Gráfico de pizza de despesas
-- Gráfico de linha de evolução financeira
-- Atualização automática a cada 30 segundos
+- Atualização em tempo real
+- Design escuro profissional
 
-### 💅 Cadastro de Atendimentos
+### 💝 Cadastro de Atendimentos
 - Registro rápido de serviços
 - Botões + e - para valor (incremento de R$10)
 - Data automática
-- Histórico completo
+- Histórico completo com persistência local
 
 ### 📦 Cadastro de Reposições
-- Controle de estoque
-- Cálculo automático de valor unitário
+- Controle de estoque de produtos
 - Botões + e - para quantidade (incremento de 1)
 - Botões + e - para valor (incremento de R$10)
+- Histórico de compras
 
 ### 💰 Cadastro de Despesas
-- Categorias pré-definidas (Aluguel, Energia, etc.)
+- Categorias pré-definidas (Aluguel, Energia, Água, Internet, Material, Outros)
 - Campo personalizável
-- Controle completo de gastos
+- Controle completo de gastos fixos e variáveis
 
 ### 📈 Relatórios
 - Visão consolidada de todas movimentações
@@ -58,32 +49,30 @@
 
 ## 🚀 Tecnologias Utilizadas
 
-### Back-end
-- **Node.js** - Runtime JavaScript
-- **Express** - Framework web
-- **SQLite3** - Banco de dados leve
-- **CORS** - Compartilhamento de recursos
-
 ### Front-end
-- **HTML5** - Estrutura
-- **CSS3** - Estilização (Dark Mode)
-- **JavaScript** - Interatividade
-- **Chart.js** - Gráficos interativos
-- **Font Awesome** - Ícones (via emoji)
+- **HTML5** - Estrutura semântica
+- **CSS3** - Estilização Dark Mode responsiva
+- **JavaScript (ES6+)** - Lógica e interatividade
+- **IndexedDB** - Banco de dados local no navegador
 
-## 📋 Pré-requisitos
+### PWA (Progressive Web App)
+- **Service Worker** - Funciona offline
+- **Manifest.json** - Instalável como app
+- **HTTPS** - Segurança e confiabilidade
 
-- **Node.js** 14.x ou superior
-- **npm** (gerenciador de pacotes)
-- **Git** (opcional)
+## 🎨 Interface
 
-## 🔧 Instalação
+### Cores do Tema
+| Cor | Código | Utilização |
+|-----|--------|-------------|
+| Rosa | `#FF69B4` | Menu ativo, destaques |
+| Roxo | `#BB86FC` | Botões principais, títulos |
+| Verde | `#03DAC6` | Valores positivos, entradas |
+| Vermelho | `#CF6679` | Valores negativos, saídas |
+| Cinza | `#1E1E1E` | Fundo do menu |
+| Preto | `#121212` | Fundo principal |
 
-### 1. Clone o repositório
-```bash
-git clone https://github.com/seu-usuario/hisa-web.git
-cd hisa-web
+## 🔧 Instalação e Uso
 
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes."# hisa-web" 
+### Acesso Online (Recomendado)
+O sistema está disponível em: https://devcadujapan.github.io/hisa-web
