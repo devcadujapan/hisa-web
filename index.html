@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#FF69B4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HISA">
+    
+    <title>HISA - Sistema de Gestão</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/LogoHisa01.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="menu">
+        <div class="logo-area">
+            <img src="icons/LogoHisa01.png" alt="HISA" class="logo-img" onerror="this.src='https://via.placeholder.com/100?text=HISA'">
+            <h2>HISA</h2>
+            <small>BROWS & LASH LIFT</small>
+        </div>
+        <button class="menu-btn ativo" data-pagina="dashboard">📊 Dashboard</button>
+        <button class="menu-btn" data-pagina="atendimentos">💝 Atendimentos</button>
+        <button class="menu-btn" data-pagina="reposicoes">📦 Reposições</button>
+        <button class="menu-btn" data-pagina="despesas">💰 Despesas</button>
+        <button class="menu-btn" data-pagina="relatorios">📈 Relatórios</button>
+    </div>
+
+    <div class="conteudo">
+        <!-- Dashboard -->
+        <div id="dashboard" class="pagina ativa">
+            <h1>📊 Dashboard</h1>
+            <div class="cards">
+                <div class="card"><h3>💰 Total Entradas</h3><div class="valor" id="total-entradas">R$ 0,00</div></div>
+                <div class="card"><h3>📤 Total Saídas</h3><div class="valor" id="total-saidas">R$ 0,00</div></div>
+                <div class="card"><h3>💎 Saldo Atual</h3><div class="valor" id="total-saldo">R$ 0,00</div></div>
+            </div>
+        </div>
+
+        <!-- Atendimentos -->
+        <div id="atendimentos" class="pagina">
+            <h1>💝 Cadastro de Atendimentos</h1>
+            <div class="formulario">
+                <input type="date" id="att-data">
+                <input type="text" id="att-cliente" placeholder="Nome da Cliente">
+                <div class="input-group">
+                    <button class="btn-minus" data-target="att-valor" data-step="10">−</button>
+                    <input type="number" id="att-valor" placeholder="Valor" step="10">
+                    <button class="btn-plus" data-target="att-valor" data-step="10">+</button>
+                </div>
+                <button id="btn-salvar-atendimento">💾 Salvar Atendimento</button>
+            </div>
+            <div class="table-container">
+                <table id="tabela-atendimentos">
+                    <thead><tr><th>Data</th><th>Cliente</th><th>Valor</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reposições -->
+        <div id="reposicoes" class="pagina">
+            <h1>📦 Cadastro de Reposições</h1>
+            <div class="formulario">
+                <input type="date" id="rep-data">
+                <input type="text" id="rep-produto" placeholder="Nome do Produto">
+                <div class="input-group">
+                    <button class="btn-minus" data-target="rep-qtd" data-step="1">−</button>
+                    <input type="number" id="rep-qtd" placeholder="Quantidade">
+                    <button class="btn-plus" data-target="rep-qtd" data-step="1">+</button>
+                </div>
+                <div class="input-group">
+                    <button class="btn-minus" data-target="rep-valor" data-step="10">−</button>
+                    <input type="number" id="rep-valor" placeholder="Valor Total">
+                    <button class="btn-plus" data-target="rep-valor" data-step="10">+</button>
+                </div>
+                <button id="btn-salvar-reposicao">💾 Salvar Reposição</button>
+            </div>
+            <div class="table-container">
+                <table id="tabela-reposicoes">
+                    <thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Valor</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Despesas -->
+        <div id="despesas" class="pagina">
+            <h1>💰 Cadastro de Despesas</h1>
+            <div class="formulario">
+                <input type="date" id="desp-data">
+                <select id="desp-tipo">
+                    <option>Aluguel</option><option>Energia</option><option>Água</option>
+                    <option>Internet</option><option>Material</option><option>Outros</option>
+                </select>
+                <div class="input-group">
+                    <button class="btn-minus" data-target="desp-valor" data-step="10">−</button>
+                    <input type="number" id="desp-valor" placeholder="Valor">
+                    <button class="btn-plus" data-target="desp-valor" data-step="10">+</button>
+                </div>
+                <button id="btn-salvar-despesa">💾 Salvar Despesa</button>
+            </div>
+            <div class="table-container">
+                <table id="tabela-despesas">
+                    <thead><tr><th>Data</th><th>Tipo</th><th>Valor</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Relatórios -->
+        <div id="relatorios" class="pagina">
+            <h1>📈 Relatório Geral</h1>
+            <button id="btn-exportar-csv">📎 Exportar CSV</button>
+            <div class="table-container">
+                <table id="tabela-relatorios">
+                    <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/database.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
