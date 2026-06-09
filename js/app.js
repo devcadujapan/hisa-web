@@ -139,6 +139,7 @@ function mudarPagina(pagina) {
 async function carregarDashboard() {
     try {
         const summary = await db.getSummary();
+        console.log('📊 Dashboard - Entradas:', summary.entradas, 'Saídas:', summary.saidas, 'Saldo:', summary.saldo);
         document.getElementById('total-entradas').innerHTML = `R$ ${summary.entradas.toFixed(2)}`;
         document.getElementById('total-saidas').innerHTML = `R$ ${summary.saidas.toFixed(2)}`;
         document.getElementById('total-saldo').innerHTML = `R$ ${summary.saldo.toFixed(2)}`;
@@ -293,49 +294,182 @@ async function salvarDespesa() {
 
 // ============ RELATÓRIOS ============
 async function carregarRelatorios() {
+    console.log('📈 Carregando relatórios...');
     try {
         const atendimentos = await db.getAll('atendimentos');
         const reposicoes = await db.getAll('reposicoes');
         const despesas = await db.getAll('despesas');
         
-        const todos = [
-            ...atendimentos.map(a => ({ data: a.data, tipo: '💰 Entrada', descricao: `${a.nome_cliente} - ${a.servico || 'Serviço'}`, valor: a.valor })),
-            ...reposicoes.map(r => ({ data: r.data, tipo: '📦 Saída (Reposição)', descricao: `${r.produto} - ${r.quantidade} un x R$ ${(r.valor_unitario || 0).toFixed(2)} = R$ ${(r.valor_total || r.valor || 0).toFixed(2)}`, valor: -(r.valor_total || r.valor || 0) })),
-            ...despesas.map(d => ({ data: d.data, tipo: '💸 Saída (Despesa)', descricao: `${d.descricao} - ${d.tipo}`, valor: -d.valor }))
-        ];
+        // Calcular totais
+        const totalEntradasCalc = atendimentos.reduce((sum, a) => sum + (a.valor || 0), 0);
+        const totalReposicoesCalc = reposicoes.reduce((sum, r) => sum + (r.valor_total || r.valor || 0), 0);
+        const totalDespesasCalc = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
+        const totalSaidasCalc = totalReposicoesCalc + totalDespesasCalc;
+        const saldoCalc = totalEntradasCalc - totalSaidasCalc;
         
-        todos.sort((a, b) => b.data.localeCompare(a.data));
+        // Criar array para a tabela
+        const todos = [];
+        
+        // Adicionar linha de cabeçalho de resumo
+        todos.push({ 
+            data: '', 
+            tipo: '📊 RESUMO', 
+            descricao: '==================', 
+            valor: 0,
+            isResumo: true 
+        });
+        
+        todos.push({ 
+            data: '', 
+            tipo: '💰 TOTAL ENTRADAS', 
+            descricao: 'Soma de todos os atendimentos', 
+            valor: totalEntradasCalc,
+            isResumo: true,
+            valorFormatado: `R$ ${totalEntradasCalc.toFixed(2)}`
+        });
+        
+        todos.push({ 
+            data: '', 
+            tipo: '📤 TOTAL SAÍDAS', 
+            descricao: 'Reposições + Despesas', 
+            valor: totalSaidasCalc,
+            isResumo: true,
+            valorFormatado: `R$ ${totalSaidasCalc.toFixed(2)}`
+        });
+        
+        const corSaldo = saldoCalc >= 0 ? '#03DAC6' : '#CF6679';
+        todos.push({ 
+            data: '', 
+            tipo: '💎 SALDO TOTAL', 
+            descricao: 'Entradas - Saídas', 
+            valor: saldoCalc,
+            isResumo: true,
+            cor: corSaldo,
+            valorFormatado: `R$ ${Math.abs(saldoCalc).toFixed(2)}`
+        });
+        
+        todos.push({ 
+            data: '', 
+            tipo: '---', 
+            descricao: '---', 
+            valor: 0,
+            isResumo: true 
+        });
+        
+        // Adicionar atendimentos (entradas)
+        for (const a of atendimentos) {
+            todos.push({ 
+                data: a.data, 
+                tipo: '💰 ENTRADA', 
+                descricao: `${a.nome_cliente} - ${a.servico || 'Atendimento'}`, 
+                valor: a.valor,
+                isResumo: false
+            });
+        }
+        
+        // Adicionar reposições (saídas)
+        for (const r of reposicoes) {
+            const valorTotal = r.valor_total || r.valor || 0;
+            const valorUnit = r.valor_unitario || (r.quantidade > 0 ? valorTotal / r.quantidade : 0);
+            todos.push({ 
+                data: r.data, 
+                tipo: '📦 SAÍDA - REPOSIÇÃO', 
+                descricao: `${r.produto} | ${r.quantidade || 0} un x R$ ${valorUnit.toFixed(2)} = R$ ${valorTotal.toFixed(2)}`, 
+                valor: -valorTotal,
+                isResumo: false
+            });
+        }
+        
+        // Adicionar despesas (saídas)
+        for (const d of despesas) {
+            todos.push({ 
+                data: d.data, 
+                tipo: '💸 SAÍDA - DESPESA', 
+                descricao: `${d.descricao || d.tipo} (${d.tipo})`, 
+                valor: -d.valor,
+                isResumo: false
+            });
+        }
+        
+        // Ordenar por data (mais recente primeiro), mas manter resumo no topo
+        const itensOrdenados = todos.filter(t => !t.isResumo);
+        itensOrdenados.sort((a, b) => b.data.localeCompare(a.data));
+        
+        const todosOrdenados = [...todos.filter(t => t.isResumo), ...itensOrdenados];
         
         const tbody = document.querySelector('#tabela-relatorios tbody');
-        if (todos.length === 0) {
-            tbody.innerHTML = '</table><td colspan="4" style="text-align: center">Nenhum registro encontrado</td></tr>';
+        if (todosOrdenados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhum registro encontrado</td></tr>';
             return;
         }
-        tbody.innerHTML = todos.map(item => `
-            <tr>
-                <td>${item.data}</td><td>${item.tipo}</td><td style="font-size: 12px;">${item.descricao}</td>
-                <td style="color: ${item.valor >= 0 ? '#03DAC6' : '#CF6679'}">R$ ${Math.abs(item.valor).toFixed(2)}</td>
-            </tr>
-        `).join('');
+        
+        tbody.innerHTML = todosOrdenados.map(item => {
+            if (item.isResumo) {
+                if (item.tipo === '---') {
+                    return `<tr style="background: #2C2C2C;"><td colspan="4" style="text-align: center; color: #BB86FC;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</td></tr>`;
+                }
+                const cor = item.cor || (item.valor >= 0 ? '#03DAC6' : '#CF6679');
+                return `
+                    <tr style="background: #2C2C2C; font-weight: bold;">
+                        <td style="color: #BB86FC;">${item.data}</td>
+                        <td style="color: #BB86FC;">${item.tipo}</td>
+                        <td style="color: #9E9E9E;">${item.descricao}</td>
+                        <td style="color: ${cor}; font-size: 16px;">${item.valorFormatado || `R$ ${Math.abs(item.valor).toFixed(2)}`}</td>
+                    </tr>
+                `;
+            } else {
+                const cor = item.valor >= 0 ? '#03DAC6' : '#CF6679';
+                const sinal = item.valor >= 0 ? '+' : '-';
+                return `
+                    <tr>
+                        <td>${item.data}</td>
+                        <td>${item.tipo}</td>
+                        <td style="font-size: 12px;">${item.descricao}</td>
+                        <td style="color: ${cor}; font-weight: bold;">${sinal} R$ ${Math.abs(item.valor).toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+        }).join('');
+        
+        console.log(`✅ ${itensOrdenados.length} registros no relatório`);
+        console.log(`📊 Totais - Entradas: R$ ${totalEntradasCalc.toFixed(2)}, Saídas: R$ ${totalSaidasCalc.toFixed(2)}, Saldo: R$ ${saldoCalc.toFixed(2)}`);
+        
     } catch (error) {
         console.error('❌ Erro ao carregar relatórios:', error);
     }
 }
 
 function exportarCSV() {
+    console.log('📎 Exportando CSV...');
     const rows = document.querySelectorAll('#tabela-relatorios tr');
     const csv = [];
+    
+    // Cabeçalho do CSV
+    csv.push('"Data","Tipo","Descrição","Valor (R$)"');
+    
     for (const row of rows) {
-        const cols = row.querySelectorAll('th, td');
-        csv.push(Array.from(cols).map(col => col.innerText).join(','));
+        const cols = row.querySelectorAll('td');
+        if (cols.length === 4) {
+            const data = cols[0].innerText.replace(/"/g, '""');
+            const tipo = cols[1].innerText.replace(/"/g, '""');
+            const descricao = cols[2].innerText.replace(/"/g, '""');
+            let valor = cols[3].innerText.replace(/"/g, '""');
+            
+            // Limpar o valor (remover R$ e espaços)
+            valor = valor.replace('R$', '').replace('+', '').replace('-', '').trim();
+            
+            csv.push(`"${data}","${tipo}","${descricao}","${valor}"`);
+        }
     }
-    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    
+    const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
     link.download = `relatorio_hisa_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    console.log('✅ CSV exportado!');
 }
 
 // ============ EDIÇÃO ATENDIMENTOS ============
