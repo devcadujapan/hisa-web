@@ -4,7 +4,7 @@ console.log('📦 database.js carregado!');
 class LocalDatabase {
     constructor() {
         this.dbName = 'HisaDB';
-        this.version = 4;
+        this.version = 5;
         this.db = null;
         this.ready = false;
     }

@@ -26,28 +26,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     
+    // Botões + e - para todos os campos
     document.querySelectorAll('.btn-plus, .btn-minus').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const targetId = btn.getAttribute('data-target');
-            const step = parseInt(btn.getAttribute('data-step')) || 1;
+            const step = parseFloat(btn.getAttribute('data-step')) || 1;
             const input = document.getElementById(targetId);
             if (input) {
                 let value = parseFloat(input.value) || 0;
                 value += btn.classList.contains('btn-plus') ? step : -step;
                 if (value < 0) value = 0;
                 input.value = value;
-                if (targetId === 'rep-qtd' || targetId === 'rep-valor') {
-                    calcularValorUnitario();
+                
+                // Recalcular totais se for reposição
+                if (targetId === 'rep-valor-unitario' || targetId === 'rep-qtd') {
+                    calcularTotalReposicao();
                 }
             }
         });
     });
     
+    // Calcular total da reposição ao digitar
+    const repValorUnitario = document.getElementById('rep-valor-unitario');
     const repQtd = document.getElementById('rep-qtd');
-    const repValor = document.getElementById('rep-valor');
-    if (repQtd) repQtd.addEventListener('input', calcularValorUnitario);
-    if (repValor) repValor.addEventListener('input', calcularValorUnitario);
+    if (repValorUnitario) repValorUnitario.addEventListener('input', calcularTotalReposicao);
+    if (repQtd) repQtd.addEventListener('input', calcularTotalReposicao);
+    
+    // Edição - calcular total
+    const editRepValorUnitario = document.getElementById('edit-rep-valor-unitario');
+    const editRepQtd = document.getElementById('edit-rep-qtd');
+    if (editRepValorUnitario) editRepValorUnitario.addEventListener('input', calcularTotalEdicaoReposicao);
+    if (editRepQtd) editRepQtd.addEventListener('input', calcularTotalEdicaoReposicao);
     
     document.getElementById('btn-salvar-atendimento')?.addEventListener('click', salvarAtendimento);
     document.getElementById('btn-salvar-reposicao')?.addEventListener('click', salvarReposicao);
@@ -65,16 +75,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✅ App inicializado com sucesso!');
 });
 
-function calcularValorUnitario() {
-    const qtd = parseFloat(document.getElementById('rep-qtd')?.value) || 0;
-    const valorTotal = parseFloat(document.getElementById('rep-valor')?.value) || 0;
-    const label = document.getElementById('valor-unitario-label');
+function calcularTotalReposicao() {
+    const valorUnitario = parseFloat(document.getElementById('rep-valor-unitario')?.value) || 0;
+    const quantidade = parseFloat(document.getElementById('rep-qtd')?.value) || 0;
+    const total = valorUnitario * quantidade;
     
-    if (label && qtd > 0) {
-        const valorUnitario = valorTotal / qtd;
-        label.innerHTML = `💰 Valor unitário: R$ ${valorUnitario.toFixed(2)}`;
-    } else if (label) {
-        label.innerHTML = `💰 Valor unitário: R$ 0,00`;
+    const totalElement = document.getElementById('rep-total-valor');
+    if (totalElement) {
+        totalElement.innerHTML = `R$ ${total.toFixed(2)}`;
+    }
+}
+
+function calcularTotalEdicaoReposicao() {
+    const valorUnitario = parseFloat(document.getElementById('edit-rep-valor-unitario')?.value) || 0;
+    const quantidade = parseFloat(document.getElementById('edit-rep-qtd')?.value) || 0;
+    const total = valorUnitario * quantidade;
+    
+    const totalElement = document.getElementById('edit-rep-total-valor');
+    if (totalElement) {
+        totalElement.innerHTML = `R$ ${total.toFixed(2)}`;
     }
 }
 
@@ -128,6 +147,7 @@ async function carregarDashboard() {
     }
 }
 
+// ============ ATENDIMENTOS ============
 async function carregarAtendimentos() {
     try {
         const atendimentos = await db.getAllOrdered('atendimentos');
@@ -169,17 +189,22 @@ async function salvarAtendimento() {
     }
 }
 
+// ============ REPOSIÇÕES ============
 async function carregarReposicoes() {
     try {
         const reposicoes = await db.getAllOrdered('reposicoes');
         const tbody = document.querySelector('#tabela-reposicoes tbody');
         if (!reposicoes || reposicoes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhuma reposição registrada</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center">Nenhuma reposição registrada</td></tr>';
             return;
         }
         tbody.innerHTML = reposicoes.map(item => `
             <tr style="cursor: pointer;" onclick="abrirModalReposicao(${item.id})">
-                <td>${item.data}</td><td>${item.produto}</td><td>${item.quantidade}</td><td>R$ ${(item.valor || 0).toFixed(2)}</td>
+                <td>${item.data}</td>
+                <td>${item.produto}</td>
+                <td>R$ ${(item.valor_unitario || 0).toFixed(2)}</td>
+                <td>${item.quantidade}</td>
+                <td>R$ ${(item.valor_total || 0).toFixed(2)}</td>
             </tr>
         `).join('');
     } catch (error) {
@@ -191,16 +216,30 @@ async function salvarReposicao() {
     try {
         const data = document.getElementById('rep-data').value;
         const produto = document.getElementById('rep-produto').value.trim();
-        const quantidade = parseInt(document.getElementById('rep-qtd').value);
-        const valor = parseFloat(document.getElementById('rep-valor').value);
+        const valorUnitario = parseFloat(document.getElementById('rep-valor-unitario').value);
+        const quantidade = parseFloat(document.getElementById('rep-qtd').value);
+        const valorTotal = valorUnitario * quantidade;
+        
         if (!produto) { alert('Digite o nome do produto!'); return; }
+        if (valorUnitario <= 0) { alert('Digite um valor unitário válido!'); return; }
         if (quantidade <= 0) { alert('Digite uma quantidade válida!'); return; }
-        if (valor <= 0) { alert('Digite um valor válido!'); return; }
-        await db.add('reposicoes', { data, produto, quantidade, valor });
-        alert('✅ Reposição salva!');
+        
+        await db.add('reposicoes', { 
+            data, 
+            produto, 
+            valor_unitario: valorUnitario,
+            quantidade: quantidade,
+            valor_total: valorTotal,
+            valor: valorTotal // Para compatibilidade com summary
+        });
+        
+        alert('✅ Reposição salva! (Total: R$ ' + valorTotal.toFixed(2) + ')');
+        
         document.getElementById('rep-produto').value = '';
+        document.getElementById('rep-valor-unitario').value = 0;
         document.getElementById('rep-qtd').value = 0;
-        document.getElementById('rep-valor').value = 0;
+        document.getElementById('rep-total-valor').innerHTML = 'R$ 0,00';
+        
         await carregarReposicoes();
         await carregarDashboard();
         await carregarRelatorios();
@@ -210,6 +249,7 @@ async function salvarReposicao() {
     }
 }
 
+// ============ DESPESAS ============
 async function carregarDespesas() {
     try {
         const despesas = await db.getAllOrdered('despesas');
@@ -251,24 +291,31 @@ async function salvarDespesa() {
     }
 }
 
+// ============ RELATÓRIOS ============
 async function carregarRelatorios() {
     try {
         const atendimentos = await db.getAll('atendimentos');
         const reposicoes = await db.getAll('reposicoes');
         const despesas = await db.getAll('despesas');
+        
         const todos = [
             ...atendimentos.map(a => ({ data: a.data, tipo: '💰 Entrada', descricao: `${a.nome_cliente} - ${a.servico || 'Serviço'}`, valor: a.valor })),
-            ...reposicoes.map(r => ({ data: r.data, tipo: '📦 Saída', descricao: `${r.produto} (${r.quantidade} un - R$ ${(r.valor/r.quantidade).toFixed(2)}/un)`, valor: -r.valor })),
-            ...despesas.map(d => ({ data: d.data, tipo: '💸 Saída', descricao: `${d.descricao} - ${d.tipo}`, valor: -d.valor }))
+            ...reposicoes.map(r => ({ data: r.data, tipo: '📦 Saída (Reposição)', descricao: `${r.produto} - ${r.quantidade} un x R$ ${(r.valor_unitario || 0).toFixed(2)} = R$ ${(r.valor_total || r.valor || 0).toFixed(2)}`, valor: -(r.valor_total || r.valor || 0) })),
+            ...despesas.map(d => ({ data: d.data, tipo: '💸 Saída (Despesa)', descricao: `${d.descricao} - ${d.tipo}`, valor: -d.valor }))
         ];
+        
         todos.sort((a, b) => b.data.localeCompare(a.data));
+        
         const tbody = document.querySelector('#tabela-relatorios tbody');
         if (todos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center">Nenhum registro encontrado</td></tr>';
+            tbody.innerHTML = '</table><td colspan="4" style="text-align: center">Nenhum registro encontrado</td></tr>';
             return;
         }
         tbody.innerHTML = todos.map(item => `
-            <tr><td>${item.data}</td><td>${item.tipo}</td><td>${item.descricao}</td><td style="color: ${item.valor >= 0 ? '#03DAC6' : '#CF6679'}">R$ ${Math.abs(item.valor).toFixed(2)}</td></tr>
+            <tr>
+                <td>${item.data}</td><td>${item.tipo}</td><td style="font-size: 12px;">${item.descricao}</td>
+                <td style="color: ${item.valor >= 0 ? '#03DAC6' : '#CF6679'}">R$ ${Math.abs(item.valor).toFixed(2)}</td>
+            </tr>
         `).join('');
     } catch (error) {
         console.error('❌ Erro ao carregar relatórios:', error);
@@ -291,7 +338,7 @@ function exportarCSV() {
     URL.revokeObjectURL(url);
 }
 
-// Funções de edição
+// ============ EDIÇÃO ATENDIMENTOS ============
 async function abrirModalAtendimento(id) {
     const atendimentos = await db.getAll('atendimentos');
     const item = atendimentos.find(a => a.id === id);
@@ -331,6 +378,7 @@ async function excluirAtendimento() {
     }
 }
 
+// ============ EDIÇÃO REPOSIÇÕES ============
 async function abrirModalReposicao(id) {
     const reposicoes = await db.getAll('reposicoes');
     const item = reposicoes.find(r => r.id === id);
@@ -338,8 +386,9 @@ async function abrirModalReposicao(id) {
         document.getElementById('edit-rep-id').value = item.id;
         document.getElementById('edit-rep-data').value = item.data;
         document.getElementById('edit-rep-produto').value = item.produto;
-        document.getElementById('edit-rep-qtd').value = item.quantidade;
-        document.getElementById('edit-rep-valor').value = item.valor;
+        document.getElementById('edit-rep-valor-unitario').value = item.valor_unitario || 0;
+        document.getElementById('edit-rep-qtd').value = item.quantidade || 0;
+        calcularTotalEdicaoReposicao();
         document.getElementById('modal-editar-reposicao').style.display = 'block';
     }
 }
@@ -348,10 +397,19 @@ async function salvarEdicaoReposicao() {
     const id = parseInt(document.getElementById('edit-rep-id').value);
     const data = document.getElementById('edit-rep-data').value;
     const produto = document.getElementById('edit-rep-produto').value;
-    const quantidade = parseInt(document.getElementById('edit-rep-qtd').value);
-    const valor = parseFloat(document.getElementById('edit-rep-valor').value);
-    await db.update('reposicoes', id, { data, produto, quantidade, valor });
-    alert('✅ Reposição atualizada!');
+    const valorUnitario = parseFloat(document.getElementById('edit-rep-valor-unitario').value);
+    const quantidade = parseFloat(document.getElementById('edit-rep-qtd').value);
+    const valorTotal = valorUnitario * quantidade;
+    
+    await db.update('reposicoes', id, { 
+        data, 
+        produto, 
+        valor_unitario: valorUnitario,
+        quantidade: quantidade,
+        valor_total: valorTotal,
+        valor: valorTotal
+    });
+    alert('✅ Reposição atualizada! (Total: R$ ' + valorTotal.toFixed(2) + ')');
     document.getElementById('modal-editar-reposicao').style.display = 'none';
     await carregarReposicoes();
     await carregarDashboard();
@@ -370,6 +428,7 @@ async function excluirReposicao() {
     }
 }
 
+// ============ EDIÇÃO DESPESAS ============
 async function abrirModalDespesa(id) {
     const despesas = await db.getAll('despesas');
     const item = despesas.find(d => d.id === id);

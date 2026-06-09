@@ -102,17 +102,26 @@
             <div class="formulario">
                 <input type="date" id="rep-data">
                 <input type="text" id="rep-produto" placeholder="Nome do Produto">
+                
+                <label style="color: #9E9E9E; font-size: 12px; margin-top: 5px;">💰 Valor Unitário (R$):</label>
+                <div class="input-group">
+                    <button class="btn-minus" data-target="rep-valor-unitario" data-step="0.5">−</button>
+                    <input type="number" id="rep-valor-unitario" placeholder="Valor Unitário" step="0.5" value="0">
+                    <button class="btn-plus" data-target="rep-valor-unitario" data-step="0.5">+</button>
+                </div>
+                
+                <label style="color: #9E9E9E; font-size: 12px; margin-top: 5px;">🔢 Quantidade:</label>
                 <div class="input-group">
                     <button class="btn-minus" data-target="rep-qtd" data-step="1">−</button>
                     <input type="number" id="rep-qtd" placeholder="Quantidade" value="0">
                     <button class="btn-plus" data-target="rep-qtd" data-step="1">+</button>
                 </div>
-                <div class="input-group">
-                    <button class="btn-minus" data-target="rep-valor" data-step="10">−</button>
-                    <input type="number" id="rep-valor" placeholder="Valor Total" step="10" value="0">
-                    <button class="btn-plus" data-target="rep-valor" data-step="10">+</button>
+                
+                <div id="rep-total-container" style="background: #2C2C2C; padding: 12px; border-radius: 8px; text-align: center;">
+                    <span style="color: #9E9E9E;">💰 Valor Total: </span>
+                    <span id="rep-total-valor" style="color: #03DAC6; font-size: 20px; font-weight: bold;">R$ 0,00</span>
                 </div>
-                <small id="valor-unitario-label" style="color: #03DAC6; font-size: 12px; margin-top: 5px; display: block;">💰 Valor unitário: R$ 0,00</small>
+                
                 <button id="btn-salvar-reposicao">💾 Salvar Reposição</button>
             </div>
             <div class="table-container">
@@ -121,13 +130,14 @@
                         <tr>
                             <th>Data</th>
                             <th>Produto</th>
+                            <th>Valor Unit.</th>
                             <th>Qtd</th>
-                            <th>Valor</th>
+                            <th>Valor Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="4" style="text-align: center">Nenhuma reposição registrada</td>
+                            <td colspan="5" style="text-align: center">Nenhuma reposição registrada</td>
                         </tr>
                     </tbody>
                 </table>
@@ -229,8 +239,12 @@
             <input type="hidden" id="edit-rep-id">
             <input type="date" id="edit-rep-data" style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2C2C2C; color: white;">
             <input type="text" id="edit-rep-produto" placeholder="Nome do Produto" style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2C2C2C; color: white;">
+            <input type="number" id="edit-rep-valor-unitario" placeholder="Valor Unitário" step="0.5" style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2C2C2C; color: white;">
             <input type="number" id="edit-rep-qtd" placeholder="Quantidade" style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2C2C2C; color: white;">
-            <input type="number" id="edit-rep-valor" placeholder="Valor Total" style="width: 100%; margin-bottom: 20px; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2C2C2C; color: white;">
+            <div id="edit-rep-total-container" style="background: #2C2C2C; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <span style="color: #9E9E9E;">💰 Valor Total: </span>
+                <span id="edit-rep-total-valor" style="color: #03DAC6; font-size: 18px; font-weight: bold;">R$ 0,00</span>
+            </div>
             <div style="display: flex; gap: 10px;">
                 <button id="btn-salvar-edicao-reposicao" style="flex: 1; padding: 12px;">💾 Salvar</button>
                 <button id="btn-excluir-reposicao" style="flex: 1; padding: 12px; background: #CF6679;">🗑️ Excluir</button>
